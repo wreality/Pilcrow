@@ -22,6 +22,8 @@ export const CURRENT_USER_METADATA = gql`
   query CurrentUserMetadata {
     currentUser {
       id
+      username
+      name
       ...profileMetadata
     }
   }
@@ -80,6 +82,9 @@ export const CURRENT_USER_SUBMISSIONS = gql`
         my_role
         effective_role
         review_coordinators {
+          ...relatedUserFields
+        }
+        reviewers {
           ...relatedUserFields
         }
         submitters {

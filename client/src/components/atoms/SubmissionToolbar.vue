@@ -34,6 +34,7 @@
       </q-toolbar-title>
 
       <q-btn-dropdown
+        v-if="!statusChangingDisabledByRole && !statusChangingDisabledByState"
         :label="$t(`submission.toolbar.status_options`)"
         flat
         menu-anchor="bottom right"
@@ -51,11 +52,14 @@
           >
           </q-btn>
         </div>
+
         <q-btn-group
           v-else-if="
             submission.status != 'AWAITING_REVIEW' &&
             submission.status != 'REJECTED' &&
-            submission.status != 'RESUBMISSION_REQUESTED'
+            submission.status != 'RESUBMISSION_REQUESTED' &&
+            submission.status != 'ACCEPTED_AS_FINAL' &&
+            submission.status != 'ARCHIVED'
           "
           flat
           square
@@ -71,7 +75,6 @@
             @click="confirmHandler('accept_for_review')"
           >
           </q-btn>
-
           <q-btn
             v-if="submission.status != 'INITIALLY_SUBMITTED'"
             data-cy="accept_as_final"
@@ -98,7 +101,6 @@
             @click="confirmHandler('reject')"
           >
           </q-btn>
-
           <q-btn
             v-if="submission.status == 'UNDER_REVIEW'"
             data-cy="close_for_review"
@@ -125,6 +127,54 @@
             :label="$t(`submission.action.open`)"
             class=""
             @click="confirmHandler('open')"
+          >
+          </q-btn>
+        </q-btn-group>
+
+        <q-btn-group
+          v-if="submission.status == 'ACCEPTED_AS_FINAL'"
+          data-cy="decision_options"
+          flat
+          square
+          class="column q-pa-sm"
+        >
+          <q-btn
+            v-if="submission.status == 'ACCEPTED_AS_FINAL'"
+            data-cy="archive"
+            rounded
+            color="dark-grey"
+            :label="$t(`submission.action.archive`)"
+            class=""
+            @click="confirmHandler('archive')"
+          >
+          </q-btn>
+          <q-btn
+            v-if="submission.status == 'ACCEPTED_AS_FINAL'"
+            data-cy="delete"
+            rounded
+            color="negative"
+            :label="$t(`submission.action.delete`)"
+            class=""
+            @click="confirmHandler('delete')"
+          >
+          </q-btn>
+        </q-btn-group>
+
+        <q-btn-group
+          v-if="submission.status == 'ARCHIVED'"
+          data-cy="decision_options"
+          flat
+          square
+          class="column q-pa-sm"
+        >
+          <q-btn
+            v-if="submission.status == 'ARCHIVED'"
+            data-cy="delete"
+            rounded
+            color="negative"
+            :label="$t(`submission.action.delete`)"
+            class=""
+            @click="confirmHandler('delete')"
           >
           </q-btn>
         </q-btn-group>
@@ -191,7 +241,10 @@
 <script setup>
 import ConfirmStatusChangeDialog from "../dialogs/ConfirmStatusChangeDialog.vue"
 import { useQuasar } from "quasar"
-import { useSubmissionExport } from "src/use/guiElements.js"
+import {
+  useSubmissionExport,
+  useStatusChangeControls,
+} from "src/use/guiElements.js"
 import { ref } from "vue"
 
 const { dialog } = useQuasar()
@@ -199,6 +252,8 @@ const { dialog } = useQuasar()
 const submissionRef = ref(props.submission)
 const { isDisabledByRole, isDisabledByState } =
   useSubmissionExport(submissionRef)
+const { statusChangingDisabledByRole, statusChangingDisabledByState } =
+  useStatusChangeControls(submissionRef)
 
 const props = defineProps({
   // Drawer status

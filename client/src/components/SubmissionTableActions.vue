@@ -70,12 +70,10 @@
         </q-tooltip>
       </q-item>
       <q-item
+        v-if="!statusChangingDisabledByRole"
         data-cy="change_status"
         clickable
-        :disable="
-          submission.status == 'REJECTED' ||
-          submission.status == 'RESUBMISSION_REQUESTED'
-        "
+        :disable="statusChangingDisabledByState"
       >
         <q-item-section data-cy="change_status_item_section">
           <q-item-label>
@@ -83,10 +81,7 @@
           </q-item-label>
         </q-item-section>
         <q-tooltip
-          v-if="
-            submission.status == 'REJECTED' ||
-            submission.status == 'RESUBMISSION_REQUESTED'
-          "
+          v-if="statusChangingDisabledByState"
           anchor="top middle"
           self="bottom middle"
           :offset="[10, 10]"
@@ -120,7 +115,8 @@
             v-else-if="
               submission.status != 'AWAITING_REVIEW' &&
               submission.status != 'REJECTED' &&
-              submission.status != 'RESUBMISSION_REQUESTED'
+              submission.status != 'RESUBMISSION_REQUESTED' &&
+              submission.status != 'DELETED'
             "
           >
             <q-item
@@ -132,7 +128,11 @@
               >{{ $t("submission.action.accept_for_review") }}</q-item
             >
             <q-item
-              v-if="submission.status != 'INITIALLY_SUBMITTED'"
+              v-if="
+                submission.status != 'INITIALLY_SUBMITTED' &&
+                submission.status != 'ACCEPTED_AS_FINAL' &&
+                submission.status != 'ARCHIVED'
+              "
               data-cy="accept_as_final"
               class="items-center"
               clickable
@@ -140,17 +140,44 @@
               >{{ $t("submission.action.accept_as_final") }}</q-item
             >
             <q-item
+              v-if="
+                submission.status != 'ACCEPTED_AS_FINAL' &&
+                submission.status != 'ARCHIVED'
+              "
               class="items-center"
               clickable
               @click="confirmHandler('request_resubmission', submission.id)"
               >{{ $t("submission.action.request_resubmission") }}</q-item
             >
             <q-item
+              v-if="
+                submission.status != 'ACCEPTED_AS_FINAL' &&
+                submission.status != 'ARCHIVED'
+              "
               data-cy="reject"
               class="items-center"
               clickable
               @click="confirmHandler('reject', submission.id)"
               >{{ $t("submission.action.reject") }}
+            </q-item>
+            <q-item
+              v-if="submission.status == 'ACCEPTED_AS_FINAL'"
+              data-cy="archive"
+              class="items-center"
+              clickable
+              @click="confirmHandler('archive', submission.id)"
+              >{{ $t("submission.action.archive") }}
+            </q-item>
+            <q-item
+              v-if="
+                submission.status == 'ACCEPTED_AS_FINAL' ||
+                submission.status == 'ARCHIVED'
+              "
+              data-cy="delete"
+              class="items-center"
+              clickable
+              @click="confirmHandler('delete', submission.id)"
+              >{{ $t("submission.action.delete") }}
             </q-item>
           </div>
           <q-separator />
@@ -212,13 +239,18 @@
 <script setup>
 import ConfirmStatusChangeDialog from "../components/dialogs/ConfirmStatusChangeDialog.vue"
 import { useQuasar } from "quasar"
-import { useSubmissionExport } from "src/use/guiElements.js"
+import {
+  useSubmissionExport,
+  useStatusChangeControls,
+} from "src/use/guiElements.js"
 import { ref } from "vue"
 const { dialog } = useQuasar()
 
 const submissionRef = ref(props.submission)
 const { isDisabledByRole, isDisabledByState } =
   useSubmissionExport(submissionRef)
+const { statusChangingDisabledByRole, statusChangingDisabledByState } =
+  useStatusChangeControls(submissionRef)
 
 const props = defineProps({
   submission: {
@@ -230,6 +262,7 @@ const props = defineProps({
     default: "",
   },
 })
+
 function cannotAccessSubmission(submission) {
   const nonreviewableStates = new Set([
     "DRAFT",
