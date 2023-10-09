@@ -1,8 +1,47 @@
-# Pilcrow
+<h1 align="center">
+    <a href="https://pilcrow.mesh-research.dev">
+    <img src="docs/.vuepress/public/logo-100x100.png"/>
+    <br />
+    Pilcrow
+    </a>
+</h1>
+<div align="center">
 
-## Development
+[![GitHub Workflow Status (with event)](https://img.shields.io/github/actions/workflow/status/mesh-research/pilcrow/CI.yml?logo=github&style=for-the-badge)](https://github.com/MESH-Research/Pilcrow/actions/workflows/CI.yml)
+![GitHub release (with filter)](https://img.shields.io/github/v/release/mesh-research/pilcrow?style=for-the-badge)
+![Rennovate Status](https://img.shields.io/badge/renovate-enabled-green?style=for-the-badge)
 
-### Getting Started
+</div>
+
+<div align="center">
+
+[Documentation](https://pilcrow.meshresearch.dev) &bullet;
+[Demo](https://release.pilcrow.dev) &bullet;
+[Discussions](https://github.com/MESH-Research/Pilcrow/discussions) &bullet;
+[Bugs/Feature Requests](https://github.com/MESH-Research/Pilcrow/issues)
+
+</div>
+
+# About Pilcrow
+
+Pilcrow is a web application designed to support the Collaborative Community Review (CCR) peer-review process.
+## What is Collaborative Community Review (CCR)
+Collaborative Community Review is a healthier, more effective way to review and develop work for publication.
+
+Traditional peer review at academic journals serves a gatekeeping role, determining whether a piece is publishable or not; this decision comes after the piece is nearly complete. This type of peer review practice often proves hostile to new ideas, unproven authors, and unfamiliar audiences. The process can even be traumatic for those involved. The PPJ is changing that with transparency, community engagement, and ongoing developmental conversations.
+
+CCR nurtures new ideas by supporting pieces through their development, creating supportive experiences for authors and audiences. The goal of this review process is to both prepare pieces for publication and improve them in those preparations. CCR is structured to encourage peer engagement rooted in trust and a shared commitment to improving the work through candid and collegial feedback. The review process is formative in a twofold sense:
+
+1. The Piece: CCR helps shape the work so that it might effectively enrich public life, and
+
+2. The People: CCR cultivates habits of responsiveness and collegiality among participants.
+
+Because the review process is formative for the piece and the people involved, each participant must enter into it willing to learn and be transformed by the process itself.
+
+To read more about the CCR process, [visit the Public Philosophy Journal's page describing the process](https://publicphilosophyjournal.org/about-community-collaborative-review/)
+
+
+
 
 Pilcrow uses [Lando](https://lando.dev) to manage its development environment.
 
