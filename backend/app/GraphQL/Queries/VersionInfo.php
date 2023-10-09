@@ -1,18 +1,11 @@
-<?php
-declare(strict_types=1);
+<?php declare(strict_types=1);
 
 namespace App\GraphQL\Queries;
 
-final class VersionInfo
+final readonly class VersionInfo
 {
-    /**
-     * Return version information
-     *
-     * @param null $_
-     * @param array $__
-     * @return array
-     */
-    public function __invoke(null $_, array $__)
+    /** @param  array{}  $args */
+    public function __invoke(null $_, array $args)
     {
         return [
           'version' => config('app.version'),
