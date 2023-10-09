@@ -15,9 +15,9 @@ target "fpm" {
   context = "backend"
   tags = ["pilcrow/fpm:latest"]
   args = {
-    VERSION = "${VERSION}"
-    VERSION_URL = "${VERSION_URL}"
-    VERSION_DATE = "${VERSION_DATE}"
+    VERSION = var.VERSION
+    VERSION_URL = var.VERSION_URL
+    VERSION_DATE = var.VERSION_DATE
   }
 }
 
