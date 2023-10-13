@@ -153,7 +153,7 @@ jobs:
           'gh api /repos/{owner}/{repo}/deployments \
             -f ref=${{ github.sha }} \
             -f environment="{}" \
-            -f required_contexts=[] \
+            -F required_contexts=[] \
             -F transient_environment=true \
             -F auto_merge=true \
             -F production_environment=false \
