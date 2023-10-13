@@ -143,11 +143,14 @@ jobs:
       - uses: actions/checkout@v3
       - run: sudo apt install -y jq parallel
         shell: bash
+      - run: echo REPO_ID=$(gh api /repos/{owner}/{repo} -q '.id') >> ${GITHUB_ENV
+        shell: bash
       - run: |
-          ID=$(gh api /repos/{owner}/{repo} -q '.id') ; echo $ID
-          ENVIRONS=$(gh api /repos/{owner}/{repo}/environments | jq -r ' .environments | .[] | .name ' |  parallel 'gh api /repositories/${ID}/environments/{}/variables/TAG | jq "{environment: "\"{}\"", tag: (.value // empty)}"' | jq  -s) ; echo $ENVIRONS
-          JSTAG=$(echo $TAGS | jq -R '.' | jq -s -c) ; echo $JSTAG
-          echo MATCHED=$(echo $ENVIRONS | jq -r --argjson tags ${JSTAG} '.[] | .tag as $tag | select([$tags[] | test($tag)] | any) | .environment' ) >> $GITHUB_ENV
+          echo ENVIRONS=$(gh api /repos/{owner}/{repo}/environments | jq -r ' .environments | .[] | .name ' |  parallel 'gh api /repositories/${REPO_ID}/environments/{}/variables/TAG | jq "{environment: "\"{}\"", tag: (.value // empty)}"' | jq  -s) >> $GITHUB_ENV
+        shell: bash
+      - run: echo JSTAG=$(echo $TAGS | jq -R '.' | jq -s -c) >> $GITHUB_ENV
+        shell: bash
+      - run: echo MATCHED=$(echo $ENVIRONS | jq -r --argjson tags ${JSTAG} '.[] | .tag as $tag | select([$tags[] | test($tag)] | any) | .environment' ) >> $GITHUB_ENV
         shell: bash
       - run: |
           echo $MATCHED | parallel \
