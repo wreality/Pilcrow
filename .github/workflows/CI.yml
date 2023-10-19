@@ -160,5 +160,5 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - run: |
-          curl -X POST -H 'Authorization: Bearer ${{ secrets.DEPLOY_TOKEN}}' ${{ secrets.DEPLOY_URL }}
+          curl -X POST -H 'Authorization: Bearer ${{ secrets.DEPLOY_KEY}}' ${{ secrets.DEPLOY_URL }}
         shell: bash
