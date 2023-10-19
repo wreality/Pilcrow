@@ -132,34 +132,29 @@ jobs:
       - uses: ./.github/actions/build-image
         with:
           target: release
-  staging:
+  environments:
     env:
       TAGS: ${{ needs.build-images.outputs.tags }}
       GH_TOKEN: ${{ secrets.REPO_TOKEN }}
     name: "Trigger Deployment"
     runs-on: ubuntu-20.04
     needs: [build-images]
+    outputs:
+      environments: ${{ steps.matches.outputs.environments }}
     steps:
       - uses: actions/checkout@v3
-      - run: sudo apt install -y jq parallel
-        shell: bash
-      - run: echo REPO_ID=$(gh api /repos/{owner}/{repo} -q '.id') >> ${GITHUB_ENV}
-        shell: bash
       - run: |
-          echo ENVIRONS=$(gh api /repos/{owner}/{repo}/environments | jq -r ' .environments | .[] | .name ' |  parallel 'gh api /repositories/${REPO_ID}/environments/{}/variables/TAG | jq "{environment: "\"{}\"", tag: (.value // empty)}"' | jq  -s) >> $GITHUB_ENV
+          echo environments=$(gh api /repos/{owner}/{repo}/environments -q  ' .environments | .[] | .name ' ) >> $GITHUB_OUTPUT
         shell: bash
-      - run: echo JSTAG=$(echo $TAGS | sed -e 's/^[ ]*//g' -e 's/[ ]*$//g' -e 's/\([a-zA-Z\.\/:0-9-]*\)/"\1"/g' | jq -sc) >> $GITHUB_ENV
-        shell: bash
-      - run: echo MATCHED=$(echo $ENVIRONS | jq -r --argjson tags ${JSTAG} '.[] | .tag as $tag | select([$tags[] | test($tag)] | any) | .environment' ) >> $GITHUB_ENV
-        shell: bash
-      - run: |
-          echo $MATCHED | parallel \
-          'gh api /repos/{owner}/{repo}/deployments \
-            -f ref=${{ github.sha }} \
-            -f environment="{}" \
-            -F required_contexts\[\] \
-            -F transient_environment=false \
-            -F auto_merge=true \
-            -F production_environment=false \
-            -f payload="{\"version\": \"${{ needs.build-images.outputs.version }}\"}"'
-        shell: bash
+        id: matches
+  deployments:
+    runs-on: ubuntu-20.04
+    needs:
+      - environments
+    name: "Deploy ${}"
+    strategy:
+      fail-fast: false
+      matrix:
+        environment: ${{ fromJson(needs.environments.outputs.environments) }}
+    steps:
+      - uses: actions/checkout@v3
