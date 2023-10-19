@@ -158,3 +158,6 @@ jobs:
         environment: ${{ fromJson(needs.environments.outputs.environments) }}
     steps:
       - uses: actions/checkout@v3
+      - run: |
+          curl -X POST -H 'Authorization: Bearer ${{ secrets.DEPLOY_TOKEN}}' ${{ secrets.DEPLOY_URL }}
+        shell: bash
