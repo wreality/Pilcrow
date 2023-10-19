@@ -36,7 +36,7 @@ COPY --chown=www-data composer.json composer.lock ./
 
 #Install dependencies with dev if dev arg is true
 
-RUN composer install --no-scripts --no-autoloader --prefer-dist
+RUN composer install --no-scripts --no-autoloader --prefer-dist --no-dev
 COPY --chown=www-data  . .
 RUN composer install --prefer-dist --no-plugins
 
