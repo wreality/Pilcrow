@@ -152,7 +152,9 @@ jobs:
       - environments
       - publish
     name: "Deploy"
-    environment: ${{ matrix.environment }}
+    environment:
+      name:  ${{ matrix.environment }}
+      url: ${{ env.URL}}
     strategy:
       fail-fast: false
       matrix:
