@@ -54,6 +54,7 @@ jobs:
         run: |
           echo "VERSION: ${{ needs.build-images.outputs.version}}"
           echo "TAGS: ${{ needs.build-images.outputs.tags}}"
+          echo "COUNT: ${{ needs.build-images.outputs.tag_count}}"
         shell: bash
       - name: Start Stack
         uses: ./.github/actions/start-stack
