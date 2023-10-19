@@ -154,7 +154,7 @@ jobs:
     name: "Deploy"
     environment:
       name:  ${{ matrix.environment }}
-      url: ${{ env.URL}}
+      url: ${{ vars.URL }}
     strategy:
       fail-fast: false
       matrix:
