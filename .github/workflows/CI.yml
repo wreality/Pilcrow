@@ -135,24 +135,23 @@ jobs:
           target: release
   environments:
     env:
-      TAGS: ${{ needs.build-images.outputs.tags }}
       GH_TOKEN: ${{ secrets.REPO_TOKEN }}
     name: "Trigger Deployment"
     runs-on: ubuntu-20.04
-    needs: [build-images]
     outputs:
       environments: ${{ steps.matches.outputs.environments }}
     steps:
       - uses: actions/checkout@v3
       - run: |
-          echo environments=$(gh api /repos/{owner}/{repo}/environments -q  ' .environments | .[] | .name ' ) >> $GITHUB_OUTPUT
+          echo environments=$(gh api /repos/{owner}/{repo}/environments -q  '[] .environments | .[] | .name] ' ) >> $GITHUB_OUTPUT
         shell: bash
         id: matches
   deployments:
     runs-on: ubuntu-20.04
     needs:
       - environments
-    name: "Deploy ${}"
+      - publish
+    name: "Deploy"
     strategy:
       fail-fast: false
       matrix:
