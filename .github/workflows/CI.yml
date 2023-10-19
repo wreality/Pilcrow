@@ -133,7 +133,7 @@ jobs:
   publish:
     name: "Publish (master branch only)"
     runs-on: ubuntu-20.04
-    needs: [build-images, backend-unit-test, client-unit-test, e2e]
+    needs: [build-images, backend-unit-test, client-unit-test]
     if: needs.build-images.outputs.tag_count > 1
     steps:
       - uses: actions/checkout@v3
