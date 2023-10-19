@@ -136,7 +136,7 @@ jobs:
   environments:
     env:
       GH_TOKEN: ${{ secrets.REPO_TOKEN }}
-    name: "Trigger Deployment"
+    name: "Environments"
     runs-on: ubuntu-20.04
     outputs:
       environments: ${{ steps.matches.outputs.environments }}
