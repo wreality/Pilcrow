@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.5](https://github.com/wreality/Pilcrow/compare/pilcrow-helm-v0.2.4...pilcrow-helm-v0.2.5) (2025-06-05)
+
+
+### Bug Fixes
+
+* re-add deps ([f0a1c37](https://github.com/wreality/Pilcrow/commit/f0a1c3756bebcd633acf26b80bb2d2db18850ee4))
+
 ## [0.2.4](https://github.com/wreality/Pilcrow/compare/pilcrow-helm-v0.2.3...pilcrow-helm-v0.2.4) (2025-06-05)
 
 
