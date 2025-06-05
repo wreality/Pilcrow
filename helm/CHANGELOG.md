@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.10](https://github.com/wreality/Pilcrow/compare/pilcrow-helm-v0.2.9...pilcrow-helm-v0.2.10) (2025-06-05)
+
+
+### Bug Fixes
+
+* **helm:** Update to appVersion 0.32.2 ([fbd110b](https://github.com/wreality/Pilcrow/commit/fbd110b085b8bc6352e0548aee48881fcb8e0f58))
+
 ## [0.2.9](https://github.com/wreality/Pilcrow/compare/pilcrow-helm-v0.2.8...pilcrow-helm-v0.2.9) (2025-06-05)
 
 
