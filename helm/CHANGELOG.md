@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.4](https://github.com/wreality/Pilcrow/compare/pilcrow-helm-v0.2.3...pilcrow-helm-v0.2.4) (2025-06-05)
+
+
+### Bug Fixes
+
+* remove broken dependencies ([dcd6c7c](https://github.com/wreality/Pilcrow/commit/dcd6c7cb8ee570e9234dfe3353560866a9655051))
+
 ## [0.2.3](https://github.com/wreality/Pilcrow/compare/pilcrow-helm-v0.2.2...pilcrow-helm-v0.2.3) (2025-06-05)
 
 
