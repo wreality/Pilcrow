@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'Laravel'),
+    'name' => env('APP_NAME', 'Pilcrow'),
 
     /*
     |--------------------------------------------------------------------------
@@ -246,8 +246,8 @@ return [
     ],
 
     'external_oauth_providers' => [
-      'google' => \App\OauthAdapters\GoogleAdapter::class,
-      'orcid' => \App\OauthAdapters\OrcidAdapter::class,
+        'google' => \App\OauthAdapters\GoogleAdapter::class,
+        'orcid' => \App\OauthAdapters\OrcidAdapter::class,
     ],
 
 ];
