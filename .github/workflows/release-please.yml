@@ -14,7 +14,6 @@ jobs:
       - uses: actions/checkout@v4
         if: ${{ steps.release.outputs.helm--release_created }}
         with:
-          persist-credentials: false
           fetch-depth: 0
       - name: Setup Helm
         uses: azure/setup-helm@v4.3.0
@@ -29,4 +28,9 @@ jobs:
       - name: Update appVersion in helm chart
         if: ${{ steps.release.outputs.release_created }}
         run: |
-          sed -i "s|appVersion: .*|appVersion: ${VERSION}|" helm/Chart.yaml
+          sed -i "s|appVersion: .*|appVersion: ${{ steps.release.outputs.version }}|" helm/Chart.yaml
+          git config --global user.name "Brian Adams"
+          git config --global user.email "adamsb@msu.edu"
+          git add helm/Chart.yaml
+          git commit -m "fix(helm): Update to appVersion ${{ steps.release.outputs.version }}"
+          git push
