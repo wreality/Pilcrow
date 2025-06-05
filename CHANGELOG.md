@@ -3,6 +3,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.32.1](https://github.com/wreality/Pilcrow/compare/v0.32.0...v0.32.1) (2025-06-05)
+
+
+### Bug Fixes
+
+* trigger yet another helm release ([35ca0d4](https://github.com/wreality/Pilcrow/commit/35ca0d40e31ce668d2b51dbb3773e7ec3135ba61))
+* update default name for app ([bdd78d3](https://github.com/wreality/Pilcrow/commit/bdd78d389324e1958e4ad2e964d0d6ac59a2c772))
+
 ## [0.32.0](https://github.com/wreality/Pilcrow/compare/v0.31.0...v0.32.0) (2025-06-05)
 
 
