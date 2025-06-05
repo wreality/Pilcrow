@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.6](https://github.com/wreality/Pilcrow/compare/pilcrow-helm-v0.2.5...pilcrow-helm-v0.2.6) (2025-06-05)
+
+
+### Bug Fixes
+
+* update helm package action ([f432506](https://github.com/wreality/Pilcrow/commit/f432506da9b96f1cbca543af9b357bf15af622d4))
+
 ## [0.2.5](https://github.com/wreality/Pilcrow/compare/pilcrow-helm-v0.2.4...pilcrow-helm-v0.2.5) (2025-06-05)
 
 
