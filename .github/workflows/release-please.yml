@@ -12,7 +12,7 @@ jobs:
         with:
           token: ${{ secrets.REPO_TOKEN }}
       - uses: actions/checkout@v4
-        if: ${{ steps.release.outputs.helm--release_created }}
+        if: ${{ steps.release.outputs.releases_created }}
         with:
           fetch-depth: 0
       - name: Setup Helm
