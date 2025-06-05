@@ -24,6 +24,7 @@ jobs:
           registry-url: oci://ghcr.io/${{ github.repository }}
           username: ${{ github.actor }}
           access-token: ${{ secrets.REPO_TOKEN }}
+          update-dependencies: true
           chart-folder: helm
       - name: Update appVersion in helm chart
         if: ${{ steps.release.outputs.release_created }}
