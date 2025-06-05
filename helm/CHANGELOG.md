@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.7](https://github.com/wreality/Pilcrow/compare/pilcrow-helm-v0.2.6...pilcrow-helm-v0.2.7) (2025-06-05)
+
+
+### Bug Fixes
+
+* remove broken charts ([2c9484c](https://github.com/wreality/Pilcrow/commit/2c9484c5b660d3610a1170ce8240f2ec1eb892e0))
+
 ## [0.2.6](https://github.com/wreality/Pilcrow/compare/pilcrow-helm-v0.2.5...pilcrow-helm-v0.2.6) (2025-06-05)
 
 
