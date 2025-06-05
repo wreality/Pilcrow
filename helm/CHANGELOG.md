@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.8](https://github.com/wreality/Pilcrow/compare/pilcrow-helm-v0.2.7...pilcrow-helm-v0.2.8) (2025-06-05)
+
+
+### Bug Fixes
+
+* update kubernetes helm chart ([ab787ae](https://github.com/wreality/Pilcrow/commit/ab787ae782f17acced735d78da68c8210110e6a4))
+
 ## [0.2.7](https://github.com/wreality/Pilcrow/compare/pilcrow-helm-v0.2.6...pilcrow-helm-v0.2.7) (2025-06-05)
 
 
