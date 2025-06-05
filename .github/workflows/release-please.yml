@@ -15,6 +15,7 @@ jobs:
         if: ${{ steps.release.outputs.releases_created }}
         with:
           fetch-depth: 0
+          token: ${{ secrets.REPO_TOKEN }}
       - if: ${{ steps.release.outputs.helm--release_created }}
         uses: wreality/helm-push@v1
         with:

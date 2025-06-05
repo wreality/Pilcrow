@@ -10,8 +10,11 @@
 [![GitHub Workflow Status (with event)](https://img.shields.io/github/actions/workflow/status/mesh-research/pilcrow/CI.yml?logo=github&style=for-the-badge)](https://github.com/MESH-Research/Pilcrow/actions/workflows/CI.yml)
 ![GitHub release (with filter)](https://img.shields.io/github/v/release/mesh-research/pilcrow?style=for-the-badge)
 ![Rennovate Status](https://img.shields.io/badge/renovate-enabled-green?style=for-the-badge)
+
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
+
 [![All Contributors](https://img.shields.io/badge/all_contributors-12-orange.svg?style=for-the-badge)](https://pilcrow.meshresearch.dev/developers/)
+
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 </div>
 
@@ -48,13 +51,13 @@ To read more about the CCR process, [visit the Public Philosophy Journal's page 
 Instructions for deploying Pilcrow on your own server can be found in [our documentation](https://pilcrow.meshresearch.dev/install/)
 
 ## Contributing
+
 See our [contribution documentation](https://pilcrow.meshresearch.dev/developers/#contributor-workflow) for help getting started with a Pilcrow development environment. Feel free to reach out to the core team via [GitHub Discussions](https://github.com/mesh-research/pilcrow/discussions)
 
-Pilcrow welcomes and recognizes the contributions of all contributors to our project, not just code.  You can see the [full list of contributors](https://pilcrow.meshresearch.dev/developers/team) on our documentation site.
+Pilcrow welcomes and recognizes the contributions of all contributors to our project, not just code. You can see the [full list of contributors](https://pilcrow.meshresearch.dev/developers/team) on our documentation site.
 
 ### Pilcrow Wiki - <https://github.com/MESH-Research/Pilcrow/wiki>
 
-* [An opinionated application](https://github.com/MESH-Research/Pilcrow/wiki/An-Opinionated-Application)
-* [Pilcrow Links](https://github.com/MESH-Research/Pilcrow/wiki/Pilcrow-Links)
-* [Style Guide](https://github.com/MESH-Research/Pilcrow/wiki/Style-Guide)
-
+-   [An opinionated application](https://github.com/MESH-Research/Pilcrow/wiki/An-Opinionated-Application)
+-   [Pilcrow Links](https://github.com/MESH-Research/Pilcrow/wiki/Pilcrow-Links)
+-   [Style Guide](https://github.com/MESH-Research/Pilcrow/wiki/Style-Guide)
