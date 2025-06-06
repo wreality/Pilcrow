@@ -94,7 +94,8 @@ runs:
         - name: Upload Frontend Assets
           uses: actions/upload-artifact@v4
           with:
-              name: frontend-bundle-v${{ steps.docker-meta-web.outputs.version }}.tar.gz
+              name: frontend-bundle
+              path: frontend-bundle-v${{ steps.docker-meta-web.outputs.version }}.tar.gz
         - name: Publish Frontend Bundle
           uses: oras-project/setup-oras@v1
         - shell: bash
