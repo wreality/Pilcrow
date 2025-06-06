@@ -89,13 +89,13 @@ runs:
         - name: tgz Frontend Assets
           shell: bash
           run: |
-              tar -czvf frontend-bundle-v${{ steps.docker-meta-web.outputs.version }}.tar.gz \
+              tar -czvf frontend-bundle.tar.gz \
                 -C /tmp/webbuild/var/www/html .
         - name: Upload Frontend Assets
           uses: actions/upload-artifact@v4
           with:
               name: frontend-bundle
-              path: frontend-bundle-v${{ steps.docker-meta-web.outputs.version }}.tar.gz
+              path: /tmp/webbuild/var/www/html/
         - name: Publish Frontend Bundle
           uses: oras-project/setup-oras@v1
         - shell: bash
@@ -103,4 +103,4 @@ runs:
               echo ${{ inputs.token }} | oras login --username wreality --password-stdin ghcr.io
               oras attach ghcr.io/${{ github.repository_owner }}/pilcrow/web:${{ steps.docker-meta-web.outputs.version }} \
                 --artifact-type application/vnd.mesh.frontend-bundle.v1+tar \
-                frontend-bundle-v${{ steps.docker-meta-web.outputs.version }}.tar.gz
+                frontend-bundle.tar.gz
