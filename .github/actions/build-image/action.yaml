@@ -4,6 +4,8 @@ inputs:
         description: "package to build"
         required: false
         default: "default"
+    token:
+        description: "GitHub token to use for authentication"
 outputs:
     version:
         description: "Version of the package that was built"
@@ -95,7 +97,7 @@ runs:
           uses: oras-project/setup-oras@v1
         - shell: bash
           run: |
-              echo ${{ secrets.REPO_TOKEN }} | ${{ oras login --username wreality --password-stdin ghcr.io
+              echo ${{ inputs.TOKEN }} | ${{ oras login --username wreality --password-stdin ghcr.io
               oras attach ghcr.io/${{ github.repository_owner }}/web:${{ steps.docker-meta-web.outputs.version }} \
                 --artifact-type application/vnd.mesh.frontend-bundle.v1+tar \
                 frontend-bundle-v${{ steps.docker-meta-web.outputs.version }}.tar.gz
