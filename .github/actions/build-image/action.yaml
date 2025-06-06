@@ -101,6 +101,6 @@ runs:
         - shell: bash
           run: |
               echo ${{ inputs.token }} | oras login --username wreality --password-stdin ghcr.io
-              oras attach ghcr.io/${{ github.repository_owner }}/web:${{ steps.docker-meta-web.outputs.version }} \
+              oras attach ghcr.io/${{ github.repository_owner }}/pilcrow/web:${{ steps.docker-meta-web.outputs.version }} \
                 --artifact-type application/vnd.mesh.frontend-bundle.v1+tar \
                 frontend-bundle-v${{ steps.docker-meta-web.outputs.version }}.tar.gz
