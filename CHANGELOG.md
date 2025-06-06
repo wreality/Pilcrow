@@ -3,6 +3,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.32.3](https://github.com/wreality/Pilcrow/compare/v0.32.2...v0.32.3) (2025-06-06)
+
+
+### Bug Fixes
+
+* generate front-end assets ([aafb34f](https://github.com/wreality/Pilcrow/commit/aafb34f8c0475582c2e7deae683947b9beda546a))
+* move local build to web container ([70161eb](https://github.com/wreality/Pilcrow/commit/70161eb2421095e362836050f09299ae2d16e118))
+* syntax error ([7a8ae57](https://github.com/wreality/Pilcrow/commit/7a8ae57c2c8756db6efeb1176263ea0255040fa6))
+
 ## [0.32.2](https://github.com/wreality/Pilcrow/compare/v0.32.1...v0.32.2) (2025-06-05)
 
 
