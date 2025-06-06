@@ -79,6 +79,7 @@ runs:
               WEB_CACHE_FROM: ${{ steps.cache-web.outputs.cache-from }}
               WEB_CACHE_TO: ${{ steps.cache-web.outputs.cache-to }}
           with:
+              source: .
               targets: ${{ inputs.target }}
               allow: fs.write=*
               files: |
