@@ -72,7 +72,6 @@ runs:
               source: .
               targets: ${{ inputs.target }}
               allow: fs.write=*
-              cache-from:
               files: |
                   ./docker-bake.hcl
                   ${{ steps.docker-meta.outputs.bake-file }}
