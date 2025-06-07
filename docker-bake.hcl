@@ -56,9 +56,9 @@ target "ci" {
         item = [
         {
             tgt = "fpm"
+            tags = [ for v in target.docker-metadata-action.tags : replace(v, "__service__", "fpm")]
             cache-from = [ for v in target.docker-build-cache-config-action.cache-from : replace(v, "__service__", "fpm")]
             cache-to = [ for v in target.docker-build-cache-config-action.cache-to : replace(v, "__service__", "fpm")]
-            tags = [ for v in target.docker-metadata-action.tags : replace(v, "__service__", "fpm")]
             output = [{
                 "type" = "image",
                 "push" = true,
@@ -66,9 +66,9 @@ target "ci" {
         },
         {
             tgt = "web"
+            tags = [ for v in target.docker-metadata-action.tags : replace(v, "__service__", "web")]
             cache-from = [ for v in target.docker-build-cache-config-action.cache-from : replace(v, "__service__", "web")]
             cache-to = [ for v in target.docker-build-cache-config-action.cache-to : replace(v, "__service__", "web")]
-            tags = [ for v in target.docker-metadata-action.tags : replace(v, "__service__", "web")]
             output = [{
                 "type" = "image"
                 "push" = true
