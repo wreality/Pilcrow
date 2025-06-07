@@ -36,9 +36,9 @@ runs:
         echo "REPO=${REPO}" >> "$GITHUB_ENV"
         echo "DOCKER_IMAGE_CACHE=${DOCKER_IMAGE_CACHE}" >> "$GITHUB_ENV"
         if [ "${{ inputs.target }}" == "release" ]; then
-            echo "IMAGE_BASE=${DOCKER_IMAGE_CACHE}" >> "$GITHUB_ENV"
-        else
             echo "IMAGE_BASE=ghcr.io/${REPO}/__service__" >> "$GITHUB_ENV"
+        else
+            echo "IMAGE_BASE=${DOCKER_IMAGE_CACHE}" >> "$GITHUB_ENV"
         fi
     - name: Replace version in source files
       shell: bash
