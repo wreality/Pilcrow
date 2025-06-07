@@ -57,7 +57,7 @@ target "ci" {
     matrix = {
         item = [
         {
-            tgt = "fpm",
+            tgt = "fpm"
             cache-from = [ for v in target.docker-build-cache-config-action.cache-from : replace(v, "__service__", "fpm")]
             cache-to = [ for v in target.docker-build-cache-config-action.cache-to : replace(v, "__service__", "fpm")]
             tags = [ for v in target.docker-metadata-action.tags : replace(v, "__service__", "fpm")]
@@ -67,15 +67,15 @@ target "ci" {
                 }]
         },
         {
-            tgt = "web",
+            tgt = "web"
             cache-from = [ for v in target.docker-build-cache-config-action.cache-from : replace(v, "__service__", "web")]
             cache-to = [ for v in target.docker-build-cache-config-action.cache-to : replace(v, "__service__", "web")]
             tags = [ for v in target.docker-metadata-action.tags : replace(v, "__service__", "web")]
             output = [{
-                "type" = "image",
-                "push" = true,
+                "type" = "image"
+                "push" = true
                 }, {
-                "type" = "local",
+                "type" = "local"
                 "dest" = "/tmp/webbuild"
                 }]
         }
