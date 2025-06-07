@@ -32,11 +32,11 @@ runs:
               echo "VERSION_URL=${VERSION_URL}" >> "$GITHUB_ENV"
               echo "VERSION_DATE=${VERSION_DATE}" >> "$GITHUB_ENV"
               echo "REPO=${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
-              echo "DOCKER_IMAGE_CACHE=ghcr.io/${REPO}/cache/__service__" >> "$GITHUB_ENV"
+              echo "DOCKER_IMAGE_CACHE=ghcr.io/$REPO/cache/__service__" >> "$GITHUB_ENV"
               if [ "${{ inputs.target }}" == "release" ]; then
                   echo "IMAGE_BASE=${DOCKER_IMAGE_CACHE}" >> "$GITHUB_ENV"
               else
-                  echo "IMAGE_BASE=ghcr.io/${REPO}/__service__" >> "$GITHUB_ENV"
+                  echo "IMAGE_BASE=ghcr.io/$REPO/__service__" >> "$GITHUB_ENV"
               fi
         - name: Replace version in source files
           shell: bash
