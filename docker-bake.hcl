@@ -31,8 +31,6 @@ target "web" {
 
 target "docker-metadata-action" {}
 
-target "docker-build-cache-config-action" {}
-
 target "default-labels" {
     labels = {
         "org.opencontainers.image.description" = "Pilcrow __service__ version: ${ VERSION }@${VERSION_DATE } (${ VERSION_URL })"
