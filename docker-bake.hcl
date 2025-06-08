@@ -2,22 +2,14 @@ variable "VERSION" {
     default = "source"
 }
 
-variable "VERSION_URL" {
-    default = ""
-}
-
-variable "VERSION_DATE" {
-    default = ""
-}
-
-variable "GITHUB_REF_NAME" {
-    default = ""
+variable "CI_TMP_DIR" {
+    default = "/tmp/webbuild"
 }
 
 target "fpm" {
     context = "backend"
     labels = {
-        for k, v in target.default-labels.labels : k => replace(v, "__service__", "FPM")
+        for k, v in target.default-labels.labels : k => replace(v, "__service__", "fpm")
     }
 }
 
@@ -29,21 +21,12 @@ target "web" {
     }
 }
 
-target "docker-metadata-action" {}
-
 target "default-labels" {
     labels = {
-        "org.opencontainers.image.description" = "Pilcrow __service__ version: ${ VERSION }@${VERSION_DATE } (${ VERSION_URL })"
+        "net.mesh-research.pilcrow.service" = "__service__"
+        "net.mesh-research.pilcrow.version" = "${VERSION}"
+
     }
-}
-
-target "fpm-release" {
-    inherits = ["fpm"]
-}
-
-target "web-release" {
-    inherits = ["web"]
-    platforms = ["linux/amd64", "linux/arm64"]
 }
 
 group "default" {
@@ -51,54 +34,52 @@ group "default" {
 }
 
 target "ci" {
-
     matrix = {
         item = [
-        {
-            tgt = "fpm"
-            tags = [ for v in target.docker-metadata-action.tags : replace(v, "__service__", "fpm")]
-            cache-from = [ for v in target.docker-build-cache-config-action.cache-from : replace(v, "__service__", "fpm")]
-            cache-to = [ for v in target.docker-build-cache-config-action.cache-to : replace(v, "__service__", "fpm")]
-            output = [{
-                "type" = "image",
-                "push" = true,
-                }]
-        },
-        {
-            tgt = "web"
-            tags = [ for v in target.docker-metadata-action.tags : replace(v, "__service__", "web")]
-            cache-from = [ for v in target.docker-build-cache-config-action.cache-from : replace(v, "__service__", "web")]
-            cache-to = [ for v in target.docker-build-cache-config-action.cache-to : replace(v, "__service__", "web")]
-            output = [{
-                "type" = "image"
-                "push" = true
-                }, {
-                "type" = "local"
-                "dest" = "/tmp/webbuild"
-                }]
-        }
-    ]
+            {
+                tgt = "fpm"
+                output = ["type=image,push=true"]
+            },
+            {
+                tgt = "web"
+                output = ["type=image,push=true", "type=local,dest=${CI_TMP_DIR}"]
+            }
+        ]
     }
     name = "ci-${item.tgt}"
     inherits = [item.tgt]
-    cache-from = item.cache-from
-    cache-to = item.cache-to
-    tags = item.tags
-    platforms = item.platforms
+
+    #Metadata action supllies us the tags to use.
+    tags = [for tag in target.docker-metadata-action.tags : replace(tag, "__service__", item.tgt)]
+
+    #Merge labels from metadata action and default-labels
+    #Replace __service__ with the target name
+    labels = merge(
+        { for k,v in target.docker-metadata-action.labels :
+            replace(k, "__service__", item.tgt) => replace(v, "__service__", item.tgt)
+        }, {for k,v  in target.default-labels.labels :
+            replace(k, "__service__", item.tgt) => replace(v, "__service__", item.tgt)
+        }
+    )
+
+    #Set cache-from and cache-to based on the cache-config action
+    #Replace __service__ with the target name
+    cache-from = [ for v in target.docker-build-cache-config-action.cache-from : replace(v, "__service__", item.tgt)]
+    cache-to = [ for v in target.docker-build-cache-config-action.cache-to : replace(v, "__service__", item.tgt)]
+
     output = item.output
 }
+target "docker-metadata-action" {}
 
+target "docker-build-cache-config-action" {}
 
 target "release" {
-    inherits = [ "ci" ]
-    name = "release-${item.tgt}"
     matrix = {
-        item = [
-            target.ci.matrix.item[0],
-            concat(target.ci.matrix.item[1], {
-                platforms = ["linux/amd64", "linux/arm64"]
-            })
-        ]
+        tgt = ["fpm", "web"]
     }
+    name = "release-${tgt}"
+    inherits = ["ci-${tgt}"]
 
+    #For release targets, we want to build multi-platform images.
+    platforms = ["linux/amd64", "linux/arm64"]
 }
