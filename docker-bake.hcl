@@ -56,16 +56,17 @@ target "ci" {
     #Replace __service__ with the target name
     labels = merge(
         { for k,v in target.docker-metadata-action.labels :
-            replace(k, "__service__", item.tgt) => replace(v, "__service__", item.tgt)
-        }, {for k,v  in target.default-labels.labels :
-            replace(k, "__service__", item.tgt) => replace(v, "__service__", item.tgt)
+            k => replace(v, "__service__", item.tgt)
+        },
+        { for k,v  in target.default-labels.labels :
+            k => replace(v, "__service__", item.tgt)
         }
     )
 
     #Set cache-from and cache-to based on the cache-config action
     #Replace __service__ with the target name
-    cache-from = [ for v in target.docker-build-cache-config-action.cache-from : replace(v, "__service__", item.tgt)]
-    cache-to = [ for v in target.docker-build-cache-config-action.cache-to : replace(v, "__service__", item.tgt)]
+    cache-from = [ for v in target.docker-build-cache-config-action.cache-from : cacheReplace(v, item.tgt)]
+    cache-to = [ for v in target.docker-build-cache-config-action.cache-to : cacheReplace(v, item.tgt)]
 
     output = item.output
 }
@@ -82,4 +83,11 @@ target "release" {
 
     #For release targets, we want to build multi-platform images.
     platforms = ["linux/amd64", "linux/arm64"]
+}
+
+function "cacheReplace" {
+    params = [config, service]
+    result = {
+        for k, v in config : k => replace(v, "__service__", service)
+    }
 }
