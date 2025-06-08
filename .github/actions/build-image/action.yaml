@@ -83,9 +83,9 @@ runs:
         targets: ${{ inputs.target }}
         allow: fs.write=*
         files: |
+          ./docker-bake.hcl
           ${{ steps.docker-meta.outputs.bake-file }}
           ${{ steps.docker-cache.outputs.bake-file }}
-          ./docker-bake.hcl
 
     - name: tgz Frontend Assets
       if: ${{ steps.docker-meta.outputs.tags != ''}}
