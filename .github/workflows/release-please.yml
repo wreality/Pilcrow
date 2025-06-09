@@ -7,6 +7,9 @@ jobs:
   release-please:
     runs-on: ubuntu-24.04
     steps:
+      - shell: bash
+        run: |
+          echo "REPO=${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
       - uses: googleapis/release-please-action@v4
         id: release
         with:
@@ -17,14 +20,39 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.REPO_TOKEN }}
       - if: ${{ steps.release.outputs.helm--release_created }}
-        uses: wreality/helm-push@v1
+        uses: wreality/helm-push@v1.1
+        id: helm-push
         with:
           useOCIRegistry: true
-          registry-url: oci://ghcr.io/${{ github.repository_owner }}
+          registry-url: oci://ghcr.io/${{ env.REPO }}
           username: ${{ github.actor }}
           access-token: ${{ secrets.REPO_TOKEN }}
           update-dependencies: true
           chart-folder: helm
+      - name: Attach helm chart to release
+        if: ${{ steps.release.outputs.helm--release_created }}
+        run: |
+          gh release upload ${{ steps.release.outputs.helm--version }} ${{ steps.helm-push.outputs.chart}}
+        env:
+          GITHUB_TOKEN: ${{ secrets.REPO_TOKEN }}
+      - name: Login to Github Packages
+        if: ${{ steps.release.outputs.release_created }}
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: ./.github/actions/build-image
+        if: ${{ steps.release.outputs.release_created }}
+        id: build-image
+        with:
+          target: release
+          token: ${{ secrets.REPO_TOKEN }}
+      - name: Upload frontend build artifacts to release
+        if: ${{ steps.release.outputs.release_created }}
+        run: |
+          gh release upload ${{ steps.release.outputs.version }} \
+            ${{ steps.build-image.outputs.frontend_bundle }}
       - name: Update appVersion in helm chart
         if: ${{ steps.release.outputs.release_created }}
         run: |
