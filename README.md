@@ -30,6 +30,8 @@
 
 # About Pilcrow
 
+A Change.
+
 Pilcrow is a web application designed to support the Collaborative Community Review (CCR) peer-review process.
 
 Collaborative Community Review is a healthier, more effective way to review and develop work for publication.
