@@ -3,6 +3,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.32.18](https://github.com/wreality/Pilcrow/compare/v0.32.17...v0.32.18) (2025-06-09)
+
+
+### Bug Fixes
+
+* correct parameter expansion ([7379475](https://github.com/wreality/Pilcrow/commit/737947509ad77de9f0023da9d174366e37aacb47))
+
 ## [0.32.17](https://github.com/wreality/Pilcrow/compare/v0.32.16...v0.32.17) (2025-06-09)
 
 
