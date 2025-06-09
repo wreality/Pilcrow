@@ -3,6 +3,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.32.11](https://github.com/wreality/Pilcrow/compare/v0.32.10...v0.32.11) (2025-06-09)
+
+
+### Bug Fixes
+
+* correct frontend assets ptath ([2b7b79b](https://github.com/wreality/Pilcrow/commit/2b7b79bac5542e73e9749cde1673e2e30f267f6b))
+
 ## [0.32.10](https://github.com/wreality/Pilcrow/compare/v0.32.9...v0.32.10) (2025-06-09)
 
 
