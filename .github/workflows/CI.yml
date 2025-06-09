@@ -6,8 +6,6 @@ on:
     branches:
       - master
       - renovate/*
-    tags:
-      - "v*"
 permissions:
   packages: write
 concurrency:

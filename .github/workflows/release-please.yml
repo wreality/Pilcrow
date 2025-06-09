@@ -14,54 +14,6 @@ jobs:
         id: release
         with:
           token: ${{ secrets.REPO_TOKEN }}
-      - uses: actions/checkout@v4
-        if: ${{ steps.release.outputs.helm--release_created }}
-        with:
-          fetch-depth: 0
-          ref: ${{ steps.release.outputs.helm--tag_name }}
-          token: ${{ secrets.REPO_TOKEN }}
-      - if: ${{ steps.release.outputs.helm--release_created }}
-        uses: wreality/helm-push@v1.1.1
-        id: helm-push
-        with:
-          useOCIRegistry: true
-          registry-url: oci://ghcr.io/${{ env.REPO }}
-          username: ${{ github.actor }}
-          access-token: ${{ secrets.REPO_TOKEN }}
-          update-dependencies: true
-          chart-folder: helm
-      - name: Attach helm chart to release
-        if: ${{ steps.release.outputs.helm--release_created }}
-        run: |
-          gh release upload ${{ steps.release.outputs.helm--tag_name }} ${{ github.workspace }}/${{ steps.helm-push.outputs.chart-package }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.REPO_TOKEN }}
-      - name: Checkout App Release Tag
-        if: ${{ steps.release.outputs.release_created }}
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-          fetch-tags: true
-
-          token: ${{ secrets.REPO_TOKEN }}
-      - name: Login to Github Packages
-        if: ${{ steps.release.outputs.release_created }}
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - uses: ./.github/actions/build-image
-        if: ${{ steps.release.outputs.release_created }}
-        id: build-image
-        with:
-          target: release
-          token: ${{ secrets.REPO_TOKEN }}
-      - name: Upload frontend build artifacts to release
-        if: ${{ steps.release.outputs.release_created }}
-        run: |
-          gh release upload ${{ steps.release.outputs.tag_name }} \
-            ${{ steps.build-image.outputs.frontend_bundle }}
       - name: Update appVersion in helm chart
         if: ${{ steps.release.outputs.release_created }}
         run: |
