@@ -3,6 +3,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.32.6](https://github.com/wreality/Pilcrow/compare/v0.32.5...v0.32.6) (2025-06-09)
+
+
+### Bug Fixes
+
+* remove multi-platform build for fpm container ([9a10661](https://github.com/wreality/Pilcrow/commit/9a10661023d3d9cad07d483ae0118a2246915958))
+
 ## [0.32.5](https://github.com/wreality/Pilcrow/compare/v0.32.4...v0.32.5) (2025-06-09)
 
 
