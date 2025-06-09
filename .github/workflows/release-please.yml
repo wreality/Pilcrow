@@ -20,7 +20,7 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.REPO_TOKEN }}
       - if: ${{ steps.release.outputs.helm--release_created }}
-        uses: wreality/helm-push@v1.1
+        uses: wreality/helm-push@v1.1.1
         id: helm-push
         with:
           useOCIRegistry: true
@@ -32,7 +32,7 @@ jobs:
       - name: Attach helm chart to release
         if: ${{ steps.release.outputs.helm--release_created }}
         run: |
-          gh release upload ${{ steps.release.outputs.helm--version }} ${{ steps.helm-push.outputs.chart}}
+          gh release upload ${{ steps.release.outputs.helm--version }} ${{ steps.helm-push.outputs.chart-package }}
         env:
           GITHUB_TOKEN: ${{ secrets.REPO_TOKEN }}
       - name: Login to Github Packages
