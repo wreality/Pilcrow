@@ -3,6 +3,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.32.12](https://github.com/wreality/Pilcrow/compare/v0.32.11...v0.32.12) (2025-06-09)
+
+
+### Bug Fixes
+
+* use git for context for docker metadata ([167ce75](https://github.com/wreality/Pilcrow/commit/167ce756e1cdcfefdda6c7daab9f4a649d907b62))
+
 ## [0.32.11](https://github.com/wreality/Pilcrow/compare/v0.32.10...v0.32.11) (2025-06-09)
 
 
