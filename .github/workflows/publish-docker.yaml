@@ -5,6 +5,8 @@ on:
       - master
     tags:
       - "v*"
+    paths-ignore:
+      - "helm/**"
 permissions:
   packages: write
 concurrency:
@@ -29,6 +31,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - uses: ./.github/actions/build-image
+        name: Build and Push Docker Images
         id: build-image
         with:
           target: release

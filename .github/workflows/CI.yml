@@ -1,11 +1,15 @@
 name: CI
 on:
   pull_request:
+    paths-ignore:
+      - "helm/**"
   merge_group:
   push:
     branches:
       - master
       - renovate/*
+    paths-ignore:
+      - "helm/**"
 permissions:
   packages: write
 concurrency:
