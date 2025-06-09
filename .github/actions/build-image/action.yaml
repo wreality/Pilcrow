@@ -119,24 +119,27 @@ runs:
       run: |
         echo "::group::Compress frontend assets"
         FRONTEND_BUNDLE="$RUNNER_TEMP/frontend-bundle.tar.gz"
-        ASSETS_PATH="${{ env.CI_TMP_DIR }}/linux_amd64/var/www/html"
+        if [ "${{ inputs.target }}" == "release" ]; then
+          ASSETS_PATH="${{ env.CI_TMP_DIR }}/linux_amd64/var/www/html"
+        else
+          ASSETS_PATH="${{ env.CI_TMP_DIR }}/var/www/html"
+        fi
         tar -czvf $FRONTEND_BUNDLE \
           -C $ASSETS_PATH .
         echo "bundle_file=$FRONTEND_BUNDLE" >> "$GITHUB_OUTPUT"
         echo "assets_path=$ASSETS_PATH" >> "$GITHUB_OUTPUT"
         echo "::endgroup::"
     - name: Upload Frontend Bundle as Github Artifact
-      if: ${{ steps.docker-meta.outputs.tags != ''}}
       uses: actions/upload-artifact@v4
       with:
         name: frontend-bundle
         path: ${{ steps.frontend-bundle.outputs.assets_path }}
     - name: Setup ORAS
-      if: ${{ steps.docker-meta.outputs.tags != ''}}
+      if: ${{ env.WEB_IMAGE != '' }}
       uses: oras-project/setup-oras@v1
     - shell: bash
       name: Attach Frontend Bundle to Docker Image
-      if: ${{ steps.docker-meta.outputs.tags != ''}}
+      if: ${{ env.WEB_IMAGE != '' }}
       run: |
         echo ${{ inputs.token }} | oras login --username wreality --password-stdin ghcr.io
         oras attach $WEB_IMAGE \
