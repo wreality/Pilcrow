@@ -119,6 +119,7 @@ runs:
         echo "::group::Compress frontend assets"
         FRONTEND_BUNDLE="$RUNNER_TEMP/frontend-bundle.tar.gz"
         ls -la $CI_TMP_DIR
+
         tar -czvf $FRONTEND_BUNDLE \
           -C $CI_TMP_DIR/var/www/html .
         echo "bundle_file=$FRONTEND_BUNDLE" >> "$GITHUB_OUTPUT"
