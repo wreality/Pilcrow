@@ -3,6 +3,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.32.21](https://github.com/wreality/Pilcrow/compare/v0.32.20...v0.32.21) (2025-06-09)
+
+
+### Bug Fixes
+
+* add ci for helm ([140dff3](https://github.com/wreality/Pilcrow/commit/140dff3f3420e45928cae048411b65cc93d46c80))
+
 ## [0.32.20](https://github.com/wreality/Pilcrow/compare/v0.32.19...v0.32.20) (2025-06-09)
 
 
