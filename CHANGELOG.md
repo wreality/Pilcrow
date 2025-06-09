@@ -3,6 +3,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.32.14](https://github.com/wreality/Pilcrow/compare/v0.32.13...v0.32.14) (2025-06-09)
+
+
+### Bug Fixes
+
+* refactor asset publishing ([bcafbba](https://github.com/wreality/Pilcrow/commit/bcafbba077c431337d16c16a1d86024219d3510f))
+* try checkout v3 ([d39963f](https://github.com/wreality/Pilcrow/commit/d39963f33cc52645d1afad666a0f6adfe68bae9b))
+
 ## [0.32.13](https://github.com/wreality/Pilcrow/compare/v0.32.12...v0.32.13) (2025-06-09)
 
 
