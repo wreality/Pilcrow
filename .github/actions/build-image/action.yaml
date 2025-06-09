@@ -63,6 +63,7 @@ runs:
       id: docker-meta
       uses: docker/metadata-action@v5
       with:
+        context: git
         images: ${{ env.IMAGE_BASE }}
         tags: |
           type=edge
