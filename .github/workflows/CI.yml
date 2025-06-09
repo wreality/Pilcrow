@@ -3,6 +3,7 @@ on:
   pull_request:
     paths-ignore:
       - "helm/**"
+      - ".release-please-manifest.json"
   merge_group:
   push:
     branches:
@@ -10,6 +11,7 @@ on:
       - renovate/*
     paths-ignore:
       - "helm/**"
+      - ".release-please-manifest.json"
 permissions:
   packages: write
 concurrency:

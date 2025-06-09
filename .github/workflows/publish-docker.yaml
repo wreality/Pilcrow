@@ -7,6 +7,7 @@ on:
       - "v*"
     paths-ignore:
       - "helm/**"
+      - ".release-please-manifest.json"
 permissions:
   packages: write
 concurrency:
