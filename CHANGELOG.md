@@ -3,6 +3,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.32.15](https://github.com/wreality/Pilcrow/compare/v0.32.14...v0.32.15) (2025-06-09)
+
+
+### Bug Fixes
+
+* checkout code after release ([402c0f6](https://github.com/wreality/Pilcrow/commit/402c0f65ccf57abc56ae46ef2ce377734a6f5144))
+* handle asset path for single platform images ([950ca70](https://github.com/wreality/Pilcrow/commit/950ca7080961825609642497308947e22bd4f80a))
+
 ## [0.32.14](https://github.com/wreality/Pilcrow/compare/v0.32.13...v0.32.14) (2025-06-09)
 
 
