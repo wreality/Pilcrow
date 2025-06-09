@@ -42,7 +42,6 @@ jobs:
         with:
           fetch-depth: 0
           fetch-tags: true
-          ref: ${{ steps.release.outputs.tag_name }}
           token: ${{ secrets.REPO_TOKEN }}
       - name: Login to Github Packages
         if: ${{ steps.release.outputs.release_created }}
