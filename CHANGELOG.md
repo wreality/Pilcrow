@@ -3,6 +3,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.32.17](https://github.com/wreality/Pilcrow/compare/v0.32.16...v0.32.17) (2025-06-09)
+
+
+### Bug Fixes
+
+* remove context git from metadata action ([b00abef](https://github.com/wreality/Pilcrow/commit/b00abefe2af06a39aa31601f2135593f00b11178))
+
 ## [0.32.16](https://github.com/wreality/Pilcrow/compare/v0.32.15...v0.32.16) (2025-06-09)
 
 
