@@ -3,6 +3,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.32.13](https://github.com/wreality/Pilcrow/compare/v0.32.12...v0.32.13) (2025-06-09)
+
+
+### Bug Fixes
+
+* attempt to fix missing tags issue ([4fa8d3a](https://github.com/wreality/Pilcrow/commit/4fa8d3a99bd473b3a7b0d08fd8ddbef2a8a30e4a))
+
 ## [0.32.12](https://github.com/wreality/Pilcrow/compare/v0.32.11...v0.32.12) (2025-06-09)
 
 
