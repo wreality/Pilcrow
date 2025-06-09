@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.13](https://github.com/wreality/Pilcrow/compare/pilcrow-helm-v0.2.12...pilcrow-helm-v0.2.13) (2025-06-09)
+
+
+### Bug Fixes
+
+* **helm:** trigger new release ([6fb5d43](https://github.com/wreality/Pilcrow/commit/6fb5d4390544af48a0caae03a8cae14ba2fde641))
+
 ## [0.2.12](https://github.com/wreality/Pilcrow/compare/pilcrow-helm-v0.2.11...pilcrow-helm-v0.2.12) (2025-06-09)
 
 
