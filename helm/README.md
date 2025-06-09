@@ -8,7 +8,6 @@ Collaborative Community Review is a healthier, more effective way to review and 
 
 ```bash
 helm install my-release oci://ghcr.io/mesh-research/pilcrow/helm
-
 ```
 
 > [!CAUTION]
