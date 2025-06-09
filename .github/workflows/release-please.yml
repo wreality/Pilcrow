@@ -15,8 +15,10 @@ jobs:
         with:
           token: ${{ secrets.REPO_TOKEN }}
       - uses: actions/checkout@v4
-        if: ${{ steps.release.outputs.releases_created }}
+        if: ${{ steps.release.outputs.helm--release_created }}
         with:
+          fetch-depth: 0
+          ref: ${{ steps.release.outputs.helm--tag_name }}
           token: ${{ secrets.REPO_TOKEN }}
       - if: ${{ steps.release.outputs.helm--release_created }}
         uses: wreality/helm-push@v1.1.1
@@ -34,6 +36,13 @@ jobs:
           gh release upload ${{ steps.release.outputs.helm--tag_name }} ${{ github.workspace }}/${{ steps.helm-push.outputs.chart-package }}
         env:
           GITHUB_TOKEN: ${{ secrets.REPO_TOKEN }}
+      - name: Checkout App Release Tag
+        if: ${{ steps.release.outputs.release_created }}
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ steps.release.outputs.tag_name }}
+          token: ${{ secrets.REPO_TOKEN }}
       - name: Login to Github Packages
         if: ${{ steps.release.outputs.release_created }}
         uses: docker/login-action@v2
