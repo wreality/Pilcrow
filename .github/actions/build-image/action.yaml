@@ -114,7 +114,7 @@ runs:
         echo "FPM_IMAGE=${FPM_IMAGE%,*}" >> "$GITHUB_ENV"
     - name: Compress & Tar Frontend Assets
       id: frontend-bundle
-      if: ${{ "$WEB_IMAGE" != '' }}
+      if: ${{ env.WEB_IMAGE != '' }}
       shell: bash
       run: |
         echo "::group::Compress frontend assets"
@@ -131,7 +131,7 @@ runs:
         echo "::endgroup::"
     - name: Upload Frontend Bundle as Github Artifact
       uses: actions/upload-artifact@v4
-      if: ${{ "$WEB_IMAGE" != '' }}
+      if: ${{ env.WEB_IMAGE != '' }}
       with:
         name: frontend-bundle
         path: ${{ steps.frontend-bundle.outputs.assets_path }}
