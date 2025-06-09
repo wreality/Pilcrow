@@ -15,6 +15,6 @@
         "lint:md": "markdownlint '.*/**/*.md' '**/*.md' -p .gitignore"
     },
     "type": "module",
-    "version": "0.32.18",
+    "version": "0.32.19",
     "dependencies": {}
 }
