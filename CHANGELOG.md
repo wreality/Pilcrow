@@ -3,6 +3,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.32.20](https://github.com/wreality/Pilcrow/compare/v0.32.19...v0.32.20) (2025-06-09)
+
+
+### Bug Fixes
+
+* missing token on release artifact upload ([ca72505](https://github.com/wreality/Pilcrow/commit/ca72505bbbfabbc8909e7824edac73f85db01bcd))
+
 ## [0.32.19](https://github.com/wreality/Pilcrow/compare/v0.32.18...v0.32.19) (2025-06-09)
 
 
