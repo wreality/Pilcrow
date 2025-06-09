@@ -3,6 +3,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.32.16](https://github.com/wreality/Pilcrow/compare/v0.32.15...v0.32.16) (2025-06-09)
+
+
+### Bug Fixes
+
+* correct syntax for checking for web image ([b8fd22c](https://github.com/wreality/Pilcrow/commit/b8fd22ce49ba705fa5740c90f33a933f7cb826fe))
+* missing assets if no image is created ([050b10b](https://github.com/wreality/Pilcrow/commit/050b10bc0c4fbab3e2e922665344dbc85e5c086e))
+
 ## [0.32.15](https://github.com/wreality/Pilcrow/compare/v0.32.14...v0.32.15) (2025-06-09)
 
 
