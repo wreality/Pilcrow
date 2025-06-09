@@ -7,11 +7,13 @@ jobs:
   release-please:
     runs-on: ubuntu-24.04
     steps:
-      - shell: bash
-        run: |
-          echo "REPO=${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
       - uses: googleapis/release-please-action@v4
         id: release
+        with:
+          token: ${{ secrets.REPO_TOKEN }}
+      - name: Checkout Repository
+        if: ${{ steps.release.outputs.release_created }}
+        uses: actions/checkout@v4
         with:
           token: ${{ secrets.REPO_TOKEN }}
       - name: Update appVersion in helm chart
