@@ -118,18 +118,18 @@ runs:
       run: |
         echo "::group::Compress frontend assets"
         FRONTEND_BUNDLE="$RUNNER_TEMP/frontend-bundle.tar.gz"
-        ls -la $CI_TMP_DIR
-
+        ASSETS_PATH="${{ env.CI_TMP_DIR }}/linux_amd64/var/www/html"
         tar -czvf $FRONTEND_BUNDLE \
-          -C $CI_TMP_DIR/var/www/html .
+          -C $ASSETS_PATH .
         echo "bundle_file=$FRONTEND_BUNDLE" >> "$GITHUB_OUTPUT"
+        echo "assets_path=$ASSETS_PATH" >> "$GITHUB_OUTPUT"
         echo "::endgroup::"
     - name: Upload Frontend Bundle as Github Artifact
       if: ${{ steps.docker-meta.outputs.tags != ''}}
       uses: actions/upload-artifact@v4
       with:
         name: frontend-bundle
-        path: ${{ env.CI_TMP_DIR }}/var/www/html/
+        path: ${{ steps.frontend-bundle.outputs.assets_path }}
     - name: Setup ORAS
       if: ${{ steps.docker-meta.outputs.tags != ''}}
       uses: oras-project/setup-oras@v1
