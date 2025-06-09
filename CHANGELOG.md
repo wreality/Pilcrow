@@ -3,6 +3,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.32.9](https://github.com/wreality/Pilcrow/compare/v0.32.8...v0.32.9) (2025-06-09)
+
+
+### Bug Fixes
+
+* fetch tags ([0eb346a](https://github.com/wreality/Pilcrow/commit/0eb346a2f3585cb45e7c3194650f7b6dc037bee9))
+
 ## [0.32.8](https://github.com/wreality/Pilcrow/compare/v0.32.7...v0.32.8) (2025-06-09)
 
 
