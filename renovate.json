@@ -22,7 +22,7 @@
          * similar testing.
          **/
         {
-            "groupName": "dev-Dependencies",
+            "groupName": "dev dependencies",
             "matchDepTypes": ["devDependencies","require-dev"]
         },
         /**
@@ -42,6 +42,7 @@
          **/
         {
             "groupName": "client dependencies (non-major)",
+            "groupSlug": "client dependencies",
             "matchFileNames": ["client/**"],
             "matchManagers": ["npm"],
             "matchDepTypes": ["dependencies"],
@@ -53,6 +54,7 @@
          **/
         {
             "groupName": "api dependencies (non-major)",
+            "groupSlug": "api dependencies",
             "matchManagers": ["composer"],
             "matchFileNames": ["backend/**"],
             "matchDepTypes": ["require"],
@@ -64,25 +66,30 @@
          **/
         {
             "groupName": "client dependencies",
-            "matchFileNames": ["client/**", "backend/**"],
-            "matchManagers": ["npm", "composer"],
-            "matchDepTypes": ["require", "dependencies"],
-            "matchUpdateTypes": ["major"]
+            "matchFileNames": ["client/**"],
+            "matchManagers": ["npm"],
+            "matchDepTypes": ["dependencies"],
+            "matchUpdateTypes": ["major"],
+            "extends": [":semanticCommitScope(client/deps)"]
         },
         
         {
             "groupName": "api dependencies",
-            "matchFileNames": ["client/**", "backend/**"],
-            "matchManagers": ["npm", "composer"],
-            "matchDepTypes": ["require", "dependencies"],
-            "matchUpdateTypes": ["major"]
+            "matchFileNames": ["backend/**"],
+            "matchManagers": ["composer"],
+            "matchDepTypes": ["require"],
+            "matchUpdateTypes": ["major"],
+            "extends": [":semanticCommitScope(api/deps)"]
         },
         {
             "groupName": "container dependencies",
+            "matchFileNames": ["client/**", "backend/**"],
+            "extends": [":semanticCommitScope(docker/deps)"],
             "matchManagers": ["dockerfile"]
         },
         {
             "groupName": "helm dependencies",
+            "extends": [":semanticCommitScope(helm/deps)"],
             "matchFileNames": ["helm/**"],
         },
         {
