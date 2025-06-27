@@ -60,7 +60,7 @@
         {
             "groupName": "docs",
             "groupSlug": "docs",
-            "commitMessagePrefix": "docs(deps):"
+            "commitMessagePrefix": "docs(deps):",
             "matchFileNames": ["docs/**"]
         }
     ],
