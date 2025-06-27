@@ -22,7 +22,7 @@
          * similar testing.
          **/
         {
-            "groupName": "development dependencies",
+            "groupName": "dev-Dependencies",
             "matchDepTypes": ["devDependencies","require-dev"]
         },
         /**
@@ -41,7 +41,7 @@
          * Group client npm updates for patch and minor
          **/
         {
-            "groupName": "client dependencies",
+            "groupName": "client dependencies (non-major)",
             "matchFileNames": ["client/**"],
             "matchManagers": ["npm"],
             "matchDepTypes": ["dependencies"],
@@ -52,7 +52,7 @@
          * Group backend composer updates for patch and minor
          **/
         {
-            "groupName": "api dependencies",
+            "groupName": "api dependencies (non-major)",
             "matchManagers": ["composer"],
             "matchFileNames": ["backend/**"],
             "matchDepTypes": ["require"],
@@ -63,7 +63,15 @@
          * Group major updates
          **/
         {
-            "groupName": "major dependency upgrades",
+            "groupName": "client dependencies (major)",
+            "matchFileNames": ["client/**", "backend/**"],
+            "matchManagers": ["npm", "composer"],
+            "matchDepTypes": ["require", "dependencies"],
+            "matchUpdateTypes": ["major"]
+        },
+        
+        {
+            "groupName": "api dependencies (major)",
             "matchFileNames": ["client/**", "backend/**"],
             "matchManagers": ["npm", "composer"],
             "matchDepTypes": ["require", "dependencies"],
@@ -78,7 +86,7 @@
             "matchFileNames": ["helm/**"],
         },
         {
-            "groupName": "docs",
+            "groupName": "docs dependencies",
             "commitMessagePrefix": "docs(deps):",
             "matchFileNames": ["docs/**"]
         }
