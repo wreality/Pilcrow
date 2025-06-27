@@ -87,7 +87,7 @@
         },
         {
             "groupName": "docs dependencies",
-            "commitMessagePrefix": "docs(deps):",
+            "commitMessagePrefix": "chore(docs/deps):",
             "matchFileNames": ["docs/**"]
         }
     ],
