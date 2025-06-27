@@ -60,7 +60,7 @@
         {
             "groupName": "docs",
             "groupSlug": "docs",
-            "extends": [":semanticCommitTypeAll(docs)"],
+            "commitMessagePrefix": "docs(deps):"
             "matchFileNames": ["docs/**"]
         }
     ],
