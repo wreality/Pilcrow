@@ -63,7 +63,7 @@
          * Group major updates
          **/
         {
-            "groupName": "client dependencies (major)",
+            "groupName": "client dependencies",
             "matchFileNames": ["client/**", "backend/**"],
             "matchManagers": ["npm", "composer"],
             "matchDepTypes": ["require", "dependencies"],
@@ -71,7 +71,7 @@
         },
         
         {
-            "groupName": "api dependencies (major)",
+            "groupName": "api dependencies",
             "matchFileNames": ["client/**", "backend/**"],
             "matchManagers": ["npm", "composer"],
             "matchDepTypes": ["require", "dependencies"],
