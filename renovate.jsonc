@@ -52,7 +52,7 @@
          * Group backend composer updates for patch and minor
          **/
         {
-            "groupName": "api",
+            "groupName": "api dependencies",
             "matchManagers": ["composer"],
             "matchFileNames": ["backend/**"],
             "matchDepTypes": ["require"],
@@ -63,14 +63,14 @@
          * Group major updates
          **/
         {
-            "groupName": "major-upgrades",
+            "groupName": "major dependency upgrades",
             "matchFileNames": ["client/**", "backend/**"],
             "matchManagers": ["npm", "composer"],
             "matchDepTypes": ["require", "dependencies"],
             "matchUpdateTypes": ["major"]
         },
         {
-            "groupName": "container",
+            "groupName": "container dependencies",
             "matchManagers": ["dockerfile"]
         },
         {
