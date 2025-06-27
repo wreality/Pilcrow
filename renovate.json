@@ -55,10 +55,14 @@
             "matchFileNames": ["backend/**"],
             "matchDepTypes": ["require"],
             "matchUpdateTypes": ["minor", "patch"]
+            "extends": [":semanticCommitScope(api/deps)"]
+}
         },
         {
             "groupName": "docs",
             "groupSlug": "docs",
+            "extends": [":semanticCommitTypeAll(docs)"]
+}
             "matchFileNames": ["docs/**"]
         }
     ],
