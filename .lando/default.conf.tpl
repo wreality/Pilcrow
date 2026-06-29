@@ -38,6 +38,15 @@ server {
         try_files /dev/null @backend;
     }
 
+    # Media-library uploads (avatars) live on the public disk, symlinked at
+    # public/storage. Serve them straight from disk — Laravel has no /storage
+    # route, and the generic location / below proxies non-text/html requests
+    # (like <img> loads) to the vite dev server, which answers with the SPA
+    # index.html (text/html) so the image never renders.
+    location /storage/ {
+        try_files $uri =404;
+    }
+
     # SPA navigation (Accept: text/html) goes to Laravel so index.blade.php can
     # inject runtime globals (__TELEMETRY_CONFIG, __APP_BANNER).
     # Everything else (JS modules, HMR, asset files) proxies to the vite dev server.
@@ -50,6 +59,16 @@ server {
 
     location /__spa {
         internal;
+        try_files /dev/null @backend;
+    }
+
+    # Moderator-only backend routes (e.g. the reported-avatar snapshot stream
+    # at /moderation/avatar-reports/{id}/snapshot). These are served by Laravel,
+    # not the SPA, and are loaded as <img>/fetch requests whose Accept header
+    # isn't text/html — so without this they'd fall through `location /` to the
+    # vite dev server and never reach PHP. The SPA's own admin pages live under
+    # /admin, so routing all of /moderation to the backend is unambiguous.
+    location /moderation/ {
         try_files /dev/null @backend;
     }
 

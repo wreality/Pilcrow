@@ -26,4 +26,6 @@ enum GlobalAbility: string
     case UserViewAny = 'user.view-any';
     case UserUpdate = 'user.update';
     case UserManageBeta = 'user.manage-beta';
+
+    case AdminAvatarModerate = 'admin_avatar_moderate';
 }

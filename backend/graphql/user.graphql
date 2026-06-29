@@ -36,6 +36,41 @@ type User {
     ): [PublicationAssignment!]!
         @hasMany(relation: "publicationAssignments", type: "PAGINATOR", defaultCount: 10)
     staged: Boolean
+
+    "The user's uploaded avatar, or null if the user has not set one."
+    avatar: Avatar @method(name: "getAvatar")
+
+    "True when a moderator has revoked this user's ability to upload an avatar."
+    avatar_upload_blocked: Boolean! @method(name: "getAvatarUploadBlocked")
+
+    """
+    Whether the current viewer may upload an avatar for this user — the
+    server-owned uploadAvatar decision (owner AND not moderator-blocked). The
+    client gates the uploader UI on this rather than re-deriving it.
+    """
+    can_upload_avatar: Boolean! @method(name: "getCanUploadAvatar")
+
+    """
+    This user's moderation history — their avatar-moderation audit entries,
+    newest first. Moderator-gated: a user cannot read their own moderation file.
+    """
+    moderationHistory: [Audit!]!
+        @method(name: "getModerationHistory")
+        @canRoot(ability: "admin_avatar_moderate")
+}
+
+"""
+An uploaded avatar image with URLs for the original and derived conversions.
+"""
+type Avatar {
+    "URL for the original uploaded image."
+    url: String!
+
+    "URL for the 96x96 thumbnail conversion, suitable for inline avatar display."
+    thumb_url: String!
+
+    "URL for the 256x256 medium conversion, suitable for profile pages."
+    medium_url: String!
 }
 
 """
@@ -48,6 +83,7 @@ type UserAbilities {
     user_view_any: Boolean!
     user_update: Boolean!
     user_manage_beta: Boolean!
+    admin_avatar_moderate: Boolean!
 }
 
 enum UserRoles {

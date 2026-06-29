@@ -1,5 +1,6 @@
 import gql from "graphql-tag"
 import {
+  _AVATAR_FIELDS,
   _COMMENT_FIELDS,
   _CURRENT_USER_FIELDS,
   _PROFILE_METADATA_FIELDS,
@@ -71,6 +72,74 @@ export const UPDATE_USER = gql`
     }
   }
 `
+export const UPLOAD_USER_AVATAR = gql`
+  mutation UploadUserAvatar($id: ID!, $avatar: Upload!) {
+    uploadUserAvatar(id: $id, avatar: $avatar) {
+      id
+      ...avatarFields
+    }
+  }
+  ${_AVATAR_FIELDS}
+`
+
+export const DELETE_USER_AVATAR = gql`
+  mutation DeleteUserAvatar($id: ID!) {
+    deleteUserAvatar(id: $id) {
+      id
+      ...avatarFields
+    }
+  }
+  ${_AVATAR_FIELDS}
+`
+
+export const REPORT_USER_AVATAR = gql`
+  mutation ReportUserAvatar($userId: ID!, $reason: String) {
+    reportUserAvatar(userId: $userId, reason: $reason) {
+      id
+    }
+  }
+`
+
+export const DISMISS_AVATAR_REPORT = gql`
+  mutation DismissAvatarReport($id: ID!) {
+    dismissAvatarReport(id: $id) {
+      id
+      avatar_upload_blocked
+    }
+  }
+`
+
+export const RESOLVE_AVATAR_REPORT_AND_REMOVE_AVATAR = gql`
+  mutation ResolveAvatarReportAndRemoveAvatar(
+    $id: ID!
+    $notes: String
+    $blockFutureUploads: Boolean
+  ) {
+    resolveAvatarReportAndRemoveAvatar(
+      id: $id
+      notes: $notes
+      blockFutureUploads: $blockFutureUploads
+    ) {
+      id
+      avatar_upload_blocked
+      avatar {
+        url
+        thumb_url
+        medium_url
+      }
+    }
+  }
+`
+
+export const SET_USER_AVATAR_UPLOAD_BLOCKED = gql`
+  mutation SetUserAvatarUploadBlocked($userId: ID!, $blocked: Boolean!) {
+    setUserAvatarUploadBlocked(userId: $userId, blocked: $blocked) {
+      id
+      avatar_upload_blocked
+    }
+  }
+`
+
 export const VERIFY_SUBMISSION_INVITE = gql`
   mutation VerifySubmissionInvite(
     $uuid: String!

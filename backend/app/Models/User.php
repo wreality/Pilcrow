@@ -7,28 +7,54 @@ use App\Auth\Abilities\GlobalAbility;
 use App\Auth\Roles\GlobalRole;
 use App\Auth\Roles\ScopedRole;
 use App\Builders\UserBuilder;
+use App\Enums\ModerationFlag;
+use App\Models\Traits\HasAvatarImage;
+use App\Models\Traits\HasModerationFlags;
 use Carbon\Carbon;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\HasApiTokens;
 use Laravel\Scout\Attributes\SearchUsingPrefix;
 use Laravel\Scout\Searchable;
+use OwenIt\Auditing\Auditable as AuditableTrait;
+use OwenIt\Auditing\Contracts\Auditable;
+use OwenIt\Auditing\Events\AuditCustom;
 use Silber\Bouncer\Database\HasRolesAndAbilities;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
-class User extends Authenticatable implements MustVerifyEmail
+class User extends Authenticatable implements MustVerifyEmail, HasMedia, Auditable
 {
     use HasFactory;
     use Notifiable;
     use HasApiTokens;
     use HasRolesAndAbilities;
     use Searchable;
+    use InteractsWithMedia;
+    use HasAvatarImage;
+    use HasModerationFlags;
+    use AuditableTrait;
+
+    /**
+     * Don't audit ordinary attribute changes (profile edits, logins). The only
+     * User audits we want are explicit moderation custom events emitted via
+     * {@see self::recordModerationAudit()}, so the log stays a clean moderation
+     * trail rather than churning on every save.
+     *
+     * @var array<int, string>
+     */
+    protected $auditEvents = [];
 
     /**
      * The attributes that are mass assignable.
@@ -64,6 +90,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'profile_metadata' => 'array',
         'beta' => 'boolean',
         'feature_opt_ins' => 'array',
+        'moderation_flags' => 'array',
     ];
 
     /**
@@ -440,5 +467,92 @@ class User extends Authenticatable implements MustVerifyEmail
         }
 
         return $colors[abs($hash) % count($colors)];
+    }
+
+    /**
+     * Register the user's media collections. The avatar collection's mechanics
+     * live in {@see HasAvatarImage}; moderation of that avatar is a separate
+     * concern kept on this model.
+     */
+    public function registerMediaCollections(): void
+    {
+        $this->registerAvatarMediaCollection();
+    }
+
+    /**
+     * Register the user's media conversions (avatar thumb/medium).
+     *
+     * @param \Spatie\MediaLibrary\MediaCollections\Models\Media|null $_media
+     *        Required by the Spatie HasMedia contract; unused here.
+     */
+    public function registerMediaConversions(?Media $_media = null): void
+    {
+        $this->registerAvatarMediaConversions();
+    }
+
+    /**
+     * Resolve the GraphQL `User.avatar_upload_blocked` field. True when a
+     * moderator has set the avatar-upload-blocked moderation flag on this
+     * user. Uploading is allowed by default; the flag is the exception.
+     */
+    public function getAvatarUploadBlocked(): bool
+    {
+        return $this->hasModerationFlag(ModerationFlag::AvatarUploadBlocked);
+    }
+
+    /**
+     * Resolve the GraphQL `can_upload_avatar` field: whether the current viewer
+     * may upload an avatar for this user, per the server-owned uploadAvatar
+     * gate (owner AND not moderator-blocked). False for guests.
+     */
+    public function getCanUploadAvatar(): bool
+    {
+        $viewer = Auth::user();
+
+        return $viewer !== null
+            && Gate::forUser($viewer)->allows('uploadAvatar', $this);
+    }
+
+    /**
+     * Tag every User audit "moderation". Since automatic attribute auditing is
+     * off ({@see self::$auditEvents}), the only audits on a User are the
+     * moderation custom events, so this tags the whole moderation trail.
+     *
+     * @return array<int, string>
+     */
+    public function generateTags(): array
+    {
+        return ['moderation'];
+    }
+
+    /**
+     * Record a moderation decision about this user in the durable audit log as
+     * a named custom event. The acting moderator is captured automatically as
+     * the audit's user; $payload (reporter, reason, notes, reported media uuid)
+     * preserves the context of the now-deleted report.
+     *
+     * @param array<string, mixed> $payload
+     */
+    public function recordModerationAudit(string $event, array $payload = []): void
+    {
+        $this->auditEvent = $event;
+        $this->isCustomEvent = true;
+        $this->auditCustomOld = [];
+        $this->auditCustomNew = $payload;
+        event(new AuditCustom($this));
+    }
+
+    /**
+     * This user's moderation history: their moderation audit entries, newest
+     * first. Resolves the GraphQL `moderationHistory` field (moderator-gated).
+     *
+     * @return \Illuminate\Database\Eloquent\Collection<int, \OwenIt\Auditing\Models\Audit>
+     */
+    public function getModerationHistory(): Collection
+    {
+        return $this->audits()
+            ->where('tags', 'like', '%moderation%')
+            ->latest()
+            ->get();
     }
 }

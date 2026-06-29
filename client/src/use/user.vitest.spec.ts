@@ -51,11 +51,21 @@ describe("useCurrentUser composable", () => {
           email: "hello@example.com",
           username: "helloUser",
           avatar_color: "blue",
+          avatar_upload_blocked: false,
+          can_upload_avatar: true,
           email_verified_at: "2021-08-14 02:26:32",
           highest_privileged_role: UserRoles.application_admin,
           roles: [{ name: "tester" }],
           beta: false,
-          feature_opt_ins: []
+          feature_opt_ins: [],
+          abilities: {
+            publication_create: false,
+            user_view: false,
+            user_view_any: false,
+            user_update: false,
+            user_manage_beta: false,
+            admin_avatar_moderate: false
+          }
         }
       }
     }
