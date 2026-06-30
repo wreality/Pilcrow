@@ -2,7 +2,7 @@
 
 extend type Query {
     "Return a submission by ID"
-    submission(id: ID @eq): Submission @find @canFind(ability: "view", find: "id")
+    submission(id: ID @eq): Submission @find @scopedCan(ability: "SubmissionAbility::View", find: "id")
 
     "Return submissions in publications managed by the current user (application admins see all; publication admins and editors see submissions in publications where they hold that role)."
     submissions(
@@ -21,53 +21,21 @@ extend type Mutation {
         input: CreateSubmissionDraftInput! @spread
     ): Submission! @create @canModel(ability: "create", injectArgs: true)
 
-    """
-    Update an existing submission.
-
-    DEPRECATED: this catch-all god-mutation is being dissolved into intent-shaped
-    mutations (updateSubmissionContent now also edits the title, submitSubmission,
-    changeSubmissionStatus, updateSubmissionSubmitters / Reviewers /
-    ReviewCoordinators, createInlineComment, createOverallComment,
-    updateInlineComment, updateOverallComment). It stays
-    callable while clients migrate; its umbrella now gates on the bridge
-    `legacyUpdate` ability (the prior broad `update`) and each input field is
-    still authorized per-field by @argPolicy. Remove once no client calls it.
-    """
-    updateSubmission(input: UpdateSubmissionInput! @spread): Submission!
-        @deprecated(
-            reason: "Use the intent-shaped submission mutations."
-        )
-        @update
-        @can(ability: "legacyUpdate", find: "id")
-        @argPolicy(
-            find: "id"
-            apply: [
-                "submitters:updateSubmitters"
-                "reviewers:updateReviewers"
-                "reviewCoordinators:updateReviewCoordinators"
-                "status:updateStatus"
-                "title:updateContent"
-                "inlineComments:updateInlineComments"
-                "overallComments:updateOverallComments"
-            ]
-            injectArgs: true
-        )
-
     "Delete an inline comment of a submission"
     deleteInlineComment(input: DeleteCommentInput! @spread): Submission!
-        @canFind(
-            ability: "delete"
+        @scopedCan(
+            ability: "CommentAbility::Delete"
             find: "comment_id"
-            model: "App\\Models\\InlineComment"
+            model: "InlineComment"
         )
         @field(resolver: "App\\GraphQL\\Mutations\\CommentMutator@deleteInline")
 
     "Delete an overall comment of a submission"
     deleteOverallComment(input: DeleteCommentInput! @spread): Submission!
-        @canFind(
-            ability: "delete"
+        @scopedCan(
+            ability: "CommentAbility::Delete"
             find: "comment_id"
-            model: "App\\Models\\OverallComment"
+            model: "OverallComment"
         )
         @field(resolver: "App\\GraphQL\\Mutations\\CommentMutator@deleteOverall")
 
@@ -79,28 +47,28 @@ extend type Mutation {
     updateSubmissionContent(
         input: UpdateSubmissionContent! @spread
     ): Submission!
-        @canFind(ability: "updateContent", find: "id")
+        @scopedCan(ability: "SubmissionAbility::UpdateContent", find: "id")
         @field(resolver: "App\\GraphQL\\Mutations\\SubmissionMutator@updateContent")
 
     "Update the content of a submission with a file upload"
     updateSubmissionContentWithFile(
         input: CreateSubmissionFileInput! @spread
     ): Submission!
-        @canFind(ability: "updateContent", find: "submission_id")
+        @scopedCan(ability: "SubmissionAbility::UpdateContent", find: "submission_id")
         @field(
             resolver: "App\\GraphQL\\Mutations\\SubmissionMutator@updateContentWithFile"
         )
 
     # --- Intent-shaped submission mutations ----------------------------------
-    # Each replaces one slice of the deprecated `updateSubmission` god-mutation
-    # with a single business action and one plain @canFind stating its true ability.
+    # Each is a single business action gated by one @scopedCan naming its true
+    # scoped ability.
     #
     # (Title is the author's content too, so it rides updateSubmissionContent —
     # one `update` ability, one mutation for the work — rather than its own.)
 
     "Send a draft submission in for review."
     submitSubmission(submission_id: ID!): Submission!
-        @canFind(ability: "submit", find: "submission_id")
+        @scopedCan(ability: "SubmissionAbility::Submit", find: "submission_id")
         @field(resolver: "App\\GraphQL\\Mutations\\SubmissionMutator@submit")
 
     """
@@ -110,33 +78,33 @@ extend type Mutation {
     """
     changeSubmissionStatus(
         input: ChangeSubmissionStatusInput! @spread
-    ): Submission! @update @canFind(ability: "updateStatus", find: "id")
+    ): Submission! @update @scopedCan(ability: "SubmissionAbility::UpdateStatus", find: "id")
 
     "Manage a submission's co-submitters."
     updateSubmissionSubmitters(
         input: UpdateSubmissionSubmittersInput! @spread
-    ): Submission! @update @canFind(ability: "updateSubmitters", find: "id")
+    ): Submission! @update @scopedCan(ability: "SubmissionAbility::UpdateSubmitters", find: "id")
 
     "Manage a submission's reviewers."
     updateSubmissionReviewers(
         input: UpdateSubmissionReviewersInput! @spread
-    ): Submission! @update @canFind(ability: "updateReviewers", find: "id")
+    ): Submission! @update @scopedCan(ability: "SubmissionAbility::UpdateReviewers", find: "id")
 
     "Manage a submission's review coordinators."
     updateSubmissionReviewCoordinators(
         input: UpdateSubmissionReviewCoordinatorsInput! @spread
     ): Submission!
         @update
-        @canFind(ability: "updateReviewCoordinators", find: "id")
+        @scopedCan(ability: "SubmissionAbility::UpdateReviewCoordinators", find: "id")
 
     "Add an inline comment (or reply) to a submission under review."
     createInlineComment(input: CreateInlineCommentArgs! @spread): Submission!
-        @canFind(ability: "review", find: "submission_id")
+        @scopedCan(ability: "SubmissionAbility::Review", find: "submission_id")
         @field(resolver: "App\\GraphQL\\Mutations\\CommentMutator@createInline")
 
     "Add an overall comment (or reply) to a submission under review."
     createOverallComment(input: CreateOverallCommentArgs! @spread): Submission!
-        @canFind(ability: "review", find: "submission_id")
+        @scopedCan(ability: "SubmissionAbility::Review", find: "submission_id")
         @field(resolver: "App\\GraphQL\\Mutations\\CommentMutator@createOverall")
 
     """
@@ -146,10 +114,10 @@ extend type Mutation {
     Only the supplied fields change.
     """
     updateInlineComment(input: UpdateInlineCommentArgs! @spread): Submission!
-        @canFind(
-            ability: "update"
+        @scopedCan(
+            ability: "CommentAbility::Update"
             find: "comment_id"
-            model: "App\\Models\\InlineComment"
+            model: "InlineComment"
         )
         @field(resolver: "App\\GraphQL\\Mutations\\CommentMutator@updateInline")
 
@@ -158,10 +126,10 @@ extend type Mutation {
     Replies fold in: a reply is an overall-comment row, edited by id.
     """
     updateOverallComment(input: UpdateOverallCommentArgs! @spread): Submission!
-        @canFind(
-            ability: "update"
+        @scopedCan(
+            ability: "CommentAbility::Update"
             find: "comment_id"
-            model: "App\\Models\\OverallComment"
+            model: "OverallComment"
         )
         @field(resolver: "App\\GraphQL\\Mutations\\CommentMutator@updateOverall")
 
@@ -191,7 +159,7 @@ extend type Mutation {
     and send them an email notification inviting them to accept the assignment"
     """
     inviteReviewer(input: inviteSubmissionUserInput @spread): Submission
-        @canFind(ability: "updateReviewers", find: "submission_id")
+        @scopedCan(ability: "SubmissionAbility::UpdateReviewers", find: "submission_id")
         @field(
             resolver: "App\\GraphQL\\Mutations\\InviteSubmissionUser@inviteReviewer"
         )
@@ -203,7 +171,7 @@ extend type Mutation {
     inviteReviewCoordinator(
         input: inviteSubmissionUserInput @spread
     ): Submission
-        @canFind(ability: "updateReviewCoordinators", find: "submission_id")
+        @scopedCan(ability: "SubmissionAbility::UpdateReviewCoordinators", find: "submission_id")
         @field(
             resolver: "App\\GraphQL\\Mutations\\InviteSubmissionUser@inviteReviewCoordinator"
         )
@@ -212,7 +180,7 @@ extend type Mutation {
     Resend an email notification inviting a staged reviewer to accept the assignment
     """
     reinviteReviewer(input: reinviteSubmissionUserInput @spread): Submission
-        @canFind(ability: "updateReviewers", find: "submission_id")
+        @scopedCan(ability: "SubmissionAbility::UpdateReviewers", find: "submission_id")
         @field(
             resolver: "App\\GraphQL\\Mutations\\ReinviteSubmissionUser@reinviteReviewer"
         )
@@ -223,7 +191,7 @@ extend type Mutation {
     reinviteReviewCoordinator(
         input: reinviteSubmissionUserInput @spread
     ): Submission
-        @canFind(ability: "updateReviewCoordinators", find: "submission_id")
+        @scopedCan(ability: "SubmissionAbility::UpdateReviewCoordinators", find: "submission_id")
         @field(
             resolver: "App\\GraphQL\\Mutations\\ReinviteSubmissionUser@reinviteReviewCoordinator"
         )
@@ -395,17 +363,6 @@ input AcceptSubmissionInviteInput
     name: String
     username: String!
     password: String!
-}
-
-input UpdateSubmissionInput @validator {
-    id: ID!
-    title: String @trim
-    status: SubmissionStatus
-    status_change_comment: String @trim
-    reviewers: UpdateSubmissionUserInput
-    review_coordinators: UpdateSubmissionUserInput
-        @rename(attribute: "reviewCoordinators")
-    submitters: UpdateSubmissionUserInput
 }
 
 input UpdateSubmissionContent @validator {
