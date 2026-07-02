@@ -9,7 +9,8 @@ import { useRouter } from "vue-router"
 import type {
   Submission,
   Publication,
-  User
+  User,
+  UserAbilities
 } from "src/graphql/generated/graphql"
 
 /**
@@ -20,8 +21,9 @@ import type {
  * State:
  *   currentUser<ref>: The currently logged in user.  Null if not logged in.
  *   isLoggedIn<ref>: Boolean true if a user is currently logged in.
- *   can<computed>: computed with signature can(ability) returns Boolean true if current user has ability
- *   hasRole<computed>: computed with signature hasRole(role) returns Boolean true if current user has role
+ *   abilities<computed>: the viewer's server-resolved global ability flags.
+ *   can(ability): Boolean true if the viewer holds the given global ability.
+ *   canAccessAdmin<computed>: Boolean true if the viewer may reach the admin area.
  *
  * @returns
  */
@@ -41,8 +43,16 @@ export function useCurrentUser() {
   })
 
   const abilities = computed(() => {
-    return query.result.value?.currentUser.abilities ?? []
+    return query.result.value?.currentUser?.abilities
   })
+
+  // Gate on a server-resolved global ability flag (UI hint; the server still
+  // enforces). Falls closed when the flag or the user is absent.
+  const can = (ability: keyof UserAbilities) => {
+    return abilities.value?.[ability] === true
+  }
+
+  const canAccessAdmin = computed(() => can("admin_area"))
 
   const roles = computed(() => {
     return query.result.value?.currentUser.roles.map(({ name }) => name) ?? []
@@ -88,6 +98,8 @@ export function useCurrentUser() {
     isLoggedIn,
     roles,
     abilities,
+    can,
+    canAccessAdmin,
     isAppAdmin,
     isSubmitter,
     isReviewer,

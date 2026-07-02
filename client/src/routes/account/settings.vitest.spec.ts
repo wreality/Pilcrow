@@ -60,6 +60,15 @@ describe("Settings page", () => {
           avatar_color: "blue",
           email_verified_at: null,
           roles: [],
+          abilities: {
+            __typename: "UserAbilities",
+            admin_area: false,
+            admin_user_manage_beta: false,
+            admin_user_update: false,
+            admin_user_view: false,
+            admin_user_view_any: false,
+            publication_create: false
+          },
           beta: false,
           feature_opt_ins: []
         }
