@@ -448,6 +448,9 @@ export const GET_PUBLICATION = gql`
       is_publicly_visible
       is_accepting_submissions
       effective_role
+      abilities {
+        update
+      }
       home_page_content
       new_submission_content
       style_criterias {

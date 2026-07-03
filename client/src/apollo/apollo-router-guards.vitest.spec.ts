@@ -80,7 +80,7 @@ describe("requiresAppAdmin router hook", () => {
     apolloMock.query.mockClear()
   })
 
-  it("allows navigation when user is an Application Administrator", async () => {
+  it("allows navigation when user holds the admin_area ability", async () => {
     const to = {
       matched: [{ meta: { requiresAppAdmin: true } }]
     }
@@ -89,7 +89,7 @@ describe("requiresAppAdmin router hook", () => {
       data: {
         currentUser: {
           id: 1,
-          highest_privileged_role: "application_admin"
+          abilities: { admin_area: true }
         }
       }
     })
@@ -103,7 +103,7 @@ describe("requiresAppAdmin router hook", () => {
     expect(next.mock.calls[0][0]).toBeUndefined()
   })
 
-  it("redirects to error403 when user is not an Application Administrator", async () => {
+  it("redirects to error403 when user lacks the admin_area ability", async () => {
     const to = {
       matched: [{ meta: { requiresAppAdmin: true } }]
     }
@@ -112,7 +112,7 @@ describe("requiresAppAdmin router hook", () => {
       data: {
         currentUser: {
           id: 1,
-          highest_privileged_role: null
+          abilities: { admin_area: false }
         }
       }
     })

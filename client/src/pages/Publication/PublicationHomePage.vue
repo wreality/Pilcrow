@@ -16,7 +16,7 @@
       <h2 class="col-sm-12" data-cy="publication_details_heading">
         {{ publication.name }}
         <q-btn
-          v-if="isPublicationAdmin"
+          v-if="canConfigure"
           data-cy="configure_button"
           icon="settings"
           class="float-right"
@@ -59,7 +59,7 @@ const publication = computed(() => {
   return result.value?.publication ?? null
 })
 
-const isPublicationAdmin = computed(() => {
-  return publication.value?.effective_role === "publication_admin"
+const canConfigure = computed(() => {
+  return publication.value?.abilities?.update === true
 })
 </script>
