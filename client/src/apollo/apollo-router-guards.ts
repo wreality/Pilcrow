@@ -441,23 +441,3 @@ export async function beforeEachRequiresExportAccess(
   }
 }
 
-export async function beforeEachRequiresAppAdmin(apolloClient, to, _, next) {
-  if (to.matched.some((record) => record.meta.requiresAppAdmin)) {
-    const access = await apolloClient
-      .query({
-        query: CURRENT_USER
-      })
-      .then(
-        ({ data: { currentUser } }) =>
-          currentUser?.abilities?.admin_area === true
-      )
-
-    if (!access) {
-      next({ name: "error403" })
-    } else {
-      next()
-    }
-  } else {
-    next()
-  }
-}

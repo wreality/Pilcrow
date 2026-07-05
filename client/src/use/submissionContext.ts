@@ -26,8 +26,29 @@ export type ActiveComment =
   | InlineCommentReply
   | NewInlineComment
 
-export const submissionKey: InjectionKey<ComputedRef<Submission | undefined>> =
-  Symbol("submission")
+/**
+ * The contract of the submission inject seam: the fields descendants of a
+ * submission page actually read through `useSubmission()`, plus the ability
+ * flags their gates read. Page-owned queries must satisfy this at the provide
+ * site (compile-checked) — the explicit alternative to lying casts while
+ * fragment masking is off. Extend it when an injector legitimately needs a
+ * new field; it dissolves into fragment-ref props if masking lands later.
+ */
+export type SubmissionContext = Pick<
+  Submission,
+  | "id"
+  | "title"
+  | "status"
+  | "content"
+  | "inline_comments"
+  | "overall_comments"
+  | "publication"
+  | "abilities"
+>
+
+export const submissionKey: InjectionKey<
+  ComputedRef<SubmissionContext | undefined>
+> = Symbol("submission")
 
 export const activeCommentKey: InjectionKey<Ref<ActiveComment | null>> =
   Symbol("activeComment")
