@@ -49,6 +49,7 @@
 import { GET_PUBLICATION } from "src/graphql/queries"
 import { useQuery } from "@vue/apollo-composable"
 import { computed } from "vue"
+import { useCan } from "src/use/abilities"
 interface Props {
   id: string
 }
@@ -59,7 +60,6 @@ const publication = computed(() => {
   return result.value?.publication ?? null
 })
 
-const canConfigure = computed(() => {
-  return publication.value?.abilities?.update === true
-})
+const can = useCan(publication)
+const canConfigure = computed(() => can("update"))
 </script>

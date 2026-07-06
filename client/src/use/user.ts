@@ -10,7 +10,7 @@ import type {
   Submission,
   Publication,
   User,
-  UserAbilities
+  UserAbility
 } from "src/graphql/generated/graphql"
 
 /**
@@ -21,7 +21,7 @@ import type {
  * State:
  *   currentUser<ref>: The currently logged in user.  Null if not logged in.
  *   isLoggedIn<ref>: Boolean true if a user is currently logged in.
- *   abilities<computed>: the viewer's server-resolved global ability flags.
+ *   abilities<computed>: the viewer's server-resolved granted global abilities.
  *   can(ability): Boolean true if the viewer holds the given global ability.
  *   canAccessAdmin<computed>: Boolean true if the viewer may reach the admin area.
  *
@@ -46,10 +46,10 @@ export function useCurrentUser() {
     return query.result.value?.currentUser?.abilities
   })
 
-  // Gate on a server-resolved global ability flag (UI hint; the server still
-  // enforces). Falls closed when the flag or the user is absent.
-  const can = (ability: keyof UserAbilities) => {
-    return abilities.value?.[ability] === true
+  // Gate on a server-resolved granted global ability (UI hint; the server
+  // still enforces). Falls closed when the user or the grant is absent.
+  const can = (ability: `${UserAbility}`) => {
+    return abilities.value?.includes(ability as UserAbility) === true
   }
 
   const canAccessAdmin = computed(() => can("admin_area"))

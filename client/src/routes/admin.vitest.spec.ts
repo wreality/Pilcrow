@@ -24,15 +24,7 @@ const currentUser = (admin_area: boolean) => ({
       email_verified_at: null,
       highest_privileged_role: null,
       roles: [],
-      abilities: {
-        __typename: "UserAbilities",
-        admin_area,
-        admin_user_manage_beta: false,
-        admin_user_update: false,
-        admin_user_view: false,
-        admin_user_view_any: false,
-        publication_create: false
-      },
+      abilities: admin_area ? ["admin_area"] : [],
       beta: false,
       feature_opt_ins: []
     }
