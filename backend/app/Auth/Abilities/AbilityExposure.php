@@ -21,11 +21,22 @@ final class AbilityExposure
      * The exposed cases of an ability enum, keyed by wire name, with their
      * descriptions.
      *
+     * Pure over the enum class — attributes are code constants — so the
+     * reflection is memoized for the process lifetime (same rationale as
+     * {@see \App\Auth\Roles\ScopedRole::rolesGranting}): the abilities
+     * resolvers call this per entity, and a list endpoint must not pay a
+     * ReflectionEnum walk per row.
+     *
      * @param class-string<\UnitEnum> $enum
      * @return array<string, array{case: \UnitEnum, description: string}>
      */
     public static function exposed(string $enum): array
     {
+        static $cache = [];
+        if (isset($cache[$enum])) {
+            return $cache[$enum];
+        }
+
         $reflection = new ReflectionEnum($enum);
 
         $exposed = [];
@@ -43,7 +54,7 @@ final class AbilityExposure
             ];
         }
 
-        return $exposed;
+        return $cache[$enum] = $exposed;
     }
 
     /**
