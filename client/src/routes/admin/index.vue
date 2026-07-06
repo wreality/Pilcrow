@@ -74,7 +74,7 @@ definePage({
   // No `crumb` — the page heading already reads "Application
   // Administration" and the parent `routes/admin.vue` contributes
   // the "Administration" crumb, so a self-crumb would duplicate.
-  // `requiresAppAdmin` comes from the parent layout.
+  // The admin-area gate lives in the parent layout's RouteGate.
   meta: {}
 })
 

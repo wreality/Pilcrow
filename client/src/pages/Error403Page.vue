@@ -1,5 +1,5 @@
 <template>
-  <div class="column fixed-center text-center">
+  <div class="column fixed-center text-center" data-cy="error403">
     <p>
       <q-icon name="lock" style="font-size: 30vmin" color="negative" />
     </p>

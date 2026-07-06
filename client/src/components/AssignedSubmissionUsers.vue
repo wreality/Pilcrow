@@ -66,6 +66,72 @@
   </section>
 </template>
 
+<script lang="ts">
+import { graphql } from "src/graphql/generated"
+
+// These mutations return users that render in a UserList, so they include
+// the UserListItem-owned `userListItem` fragment.
+graphql(`
+  mutation UpdateSubmissionReviewers(
+    $id: ID!
+    $connect: [ID!]
+    $disconnect: [ID!]
+  ) {
+    updateSubmissionReviewers(
+      input: {
+        id: $id
+        reviewers: { connect: $connect, disconnect: $disconnect }
+      }
+    ) {
+      id
+      reviewers {
+        ...userListItem
+      }
+    }
+  }
+`)
+
+graphql(`
+  mutation UpdateSubmissionReviewCoordinators(
+    $id: ID!
+    $connect: [ID!]
+    $disconnect: [ID!]
+  ) {
+    updateSubmissionReviewCoordinators(
+      input: {
+        id: $id
+        review_coordinators: { connect: $connect, disconnect: $disconnect }
+      }
+    ) {
+      id
+      review_coordinators {
+        ...userListItem
+      }
+    }
+  }
+`)
+
+graphql(`
+  mutation UpdateSubmissionSubmitters(
+    $id: ID!
+    $connect: [ID!]
+    $disconnect: [ID!]
+  ) {
+    updateSubmissionSubmitters(
+      input: {
+        id: $id
+        submitters: { connect: $connect, disconnect: $disconnect }
+      }
+    ) {
+      id
+      submitters {
+        ...userListItem
+      }
+    }
+  }
+`)
+</script>
+
 <script setup lang="ts">
 import ReinviteUserDialog from "./dialogs/ReinviteUserDialog.vue"
 import FindUserSelect from "./forms/FindUserSelect.vue"
@@ -74,12 +140,14 @@ import UserList from "./molecules/UserList.vue"
 import { useFeedbackMessages } from "src/use/guiElements"
 import { useMutation } from "@vue/apollo-composable"
 import {
-  UPDATE_SUBMISSION_REVIEWERS,
-  UPDATE_SUBMISSION_REVIEW_COORDINATORS,
-  UPDATE_SUBMISSION_SUBMITERS,
   INVITE_REVIEWER,
   INVITE_REVIEW_COORDINATOR
 } from "src/graphql/mutations"
+import {
+  UpdateSubmissionReviewersDocument,
+  UpdateSubmissionReviewCoordinatorsDocument,
+  UpdateSubmissionSubmittersDocument
+} from "src/graphql/generated/graphql"
 import { computed, ref } from "vue"
 import type { DocumentNode } from "graphql"
 import { useI18nPrefix } from "src/use/i18nPrefix"
@@ -87,7 +155,10 @@ import { useEditor, EditorContent } from "@tiptap/vue-3"
 import StarterKit from "@tiptap/starter-kit"
 import Placeholder from "@tiptap/extension-placeholder"
 import { useQuasar } from "quasar"
-import type { Submission, User } from "src/graphql/generated/graphql"
+import type {
+  Submission,
+  userListItemFragment
+} from "src/graphql/generated/graphql"
 
 const { dialog } = useQuasar()
 
@@ -128,16 +199,16 @@ interface SubmissionMutationVars {
 
 const mutations: Record<string, RoleMutations> = {
   reviewers: {
-    update: UPDATE_SUBMISSION_REVIEWERS,
+    update: UpdateSubmissionReviewersDocument,
     invite: INVITE_REVIEWER
   },
   review_coordinators: {
-    update: UPDATE_SUBMISSION_REVIEW_COORDINATORS,
+    update: UpdateSubmissionReviewCoordinatorsDocument,
     invite: INVITE_REVIEW_COORDINATOR
   },
   submitters: {
-    update: UPDATE_SUBMISSION_SUBMITERS,
-    invite: UPDATE_SUBMISSION_SUBMITERS // TODO: Enable submitter invitation
+    update: UpdateSubmissionSubmittersDocument,
+    invite: UpdateSubmissionSubmittersDocument // TODO: Enable submitter invitation
   }
 }
 const setMutationType = computed(() => {
@@ -259,7 +330,7 @@ async function assignUser(selectedUser: FoundUser) {
   }
 }
 
-async function reinviteUser({ user }: { user: User }) {
+async function reinviteUser({ user }: { user: userListItemFragment }) {
   if (!user.email) {
     return
   }
@@ -287,7 +358,7 @@ function dirtyDialog(email: string) {
   })
 }
 
-async function handleUserListClick({ user }: { user: User }) {
+async function handleUserListClick({ user }: { user: userListItemFragment }) {
   if (!props.mutable) return
   try {
     await mutate({ disconnect: [user.id] })

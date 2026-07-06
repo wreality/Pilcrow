@@ -16,7 +16,7 @@
       <h2 class="col-sm-12" data-cy="publication_details_heading">
         {{ publication.name }}
         <q-btn
-          v-if="isPublicationAdmin"
+          v-if="canConfigure"
           data-cy="configure_button"
           icon="settings"
           class="float-right"
@@ -49,6 +49,7 @@
 import { GET_PUBLICATION } from "src/graphql/queries"
 import { useQuery } from "@vue/apollo-composable"
 import { computed } from "vue"
+import { useCan } from "src/use/abilities"
 interface Props {
   id: string
 }
@@ -59,7 +60,6 @@ const publication = computed(() => {
   return result.value?.publication ?? null
 })
 
-const isPublicationAdmin = computed(() => {
-  return publication.value?.effective_role === "publication_admin"
-})
+const can = useCan(publication)
+const canConfigure = computed(() => can("update"))
 </script>

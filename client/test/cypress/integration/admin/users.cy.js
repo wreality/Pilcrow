@@ -13,13 +13,16 @@ describe("Admin Users Index", () => {
   it("restricts access based on role", () => {
     cy.login({ email: "regularuser@meshresearch.net" })
     cy.visit("/admin/users")
-    cy.url().should("include", "/error403")
+    // Denial renders a 403 in place; the URL is preserved.
+    cy.dataCy("error403")
+    cy.url().should("include", "/admin/users")
   })
 
   it("allows access based on role", () => {
     cy.login({ email: "applicationadministrator@meshresearch.net" })
     cy.visit("/admin/users")
-    cy.url().should("not.include", "/error403")
+    cy.contains("h2", /./)
+    cy.dataCy("error403").should("not.exist")
   })
 
   it("should assert the page is accessible", () => {
