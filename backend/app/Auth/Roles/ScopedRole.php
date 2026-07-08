@@ -159,15 +159,14 @@ enum ScopedRole: string
      * chain — it extends the reviewer with the author's content / submit grants
      * (all DRAFT-only conditional grants).
      *
-     * This is the corrected submission ability matrix landing in a TRANSITIONAL
-     * form: the new abilities ({@see SubmissionAbility::Review},
-     * {@see SubmissionAbility::Submit}) and the re-seated
-     * {@see SubmissionAbility::UpdateContent} (author/draft body + file + title,
-     * folding in the old UpdateTitle — closes the manuscript-edit hole) are in
-     * place, while the deprecated `updateSubmission` god-mutation keeps working via
-     * the LegacyUpdate bridge. That bridge, and the remaining refinements (drop
-     * Reviewer `View`, split `UpdateSubmitters` into draft↔not-draft), land with
-     * the god-mutation's removal once clients have migrated.
+     * This is the corrected submission ability matrix: the intent abilities
+     * ({@see SubmissionAbility::Review}, {@see SubmissionAbility::Submit}) and the
+     * re-seated {@see SubmissionAbility::UpdateContent} (author/draft body + file +
+     * title, folding in the old UpdateTitle — closes the manuscript-edit hole) are
+     * in place, and the deprecated `updateSubmission` god-mutation and its
+     * LegacyUpdate bridge are gone. A few refinements still remain as standalone
+     * follow-ups (drop Reviewer `View`, split `UpdateSubmitters` into
+     * draft↔not-draft, retire the submitter's draft-only `UpdateStatus`).
      *
      * @return array<int, \App\Auth\Abilities\ScopedAbility|array{0: \App\Auth\Abilities\ScopedAbility, 1: class-string<\App\Auth\Grants\Predicate>}>
      */
@@ -176,9 +175,9 @@ enum ScopedRole: string
         return match ($this) {
             self::Reviewer => [
                 // Reviewer's canonical footprint: read the manuscript and comment
-                // while under review. (The end-state drops View here; kept for now
-                // so reviewer item-reads survive until the review surface gates on
-                // `review`.)
+                // while under review. (A later refinement drops View here; kept for
+                // now so reviewer item-reads survive until the review surface gates
+                // on `review`.)
                 SubmissionAbility::View,
                 [SubmissionAbility::Review, SubmissionIsReviewable::class],
                 // Authoring a comment grants the right to revise or retract it —
@@ -187,9 +186,6 @@ enum ScopedRole: string
                 // carries the authorship + reviewable conditions.
                 [CommentAbility::Update, OwnsCommentWhileReviewable::class],
                 [CommentAbility::Delete, OwnsCommentWhileReviewable::class],
-                // Bridge: the deprecated god-mutation umbrella (@can legacyUpdate)
-                // needs the prior broad grant so it stays callable for every role.
-                SubmissionAbility::LegacyUpdate,
             ],
             self::ReviewCoordinator => [
                 ...self::Reviewer->grantDefinitions(),
@@ -213,9 +209,10 @@ enum ScopedRole: string
                 [SubmissionAbility::UpdateContent, SubmissionIsDraft::class],
                 [SubmissionAbility::Submit, SubmissionIsDraft::class],
                 SubmissionAbility::UpdateSubmitters,
-                // Bridge: the deprecated god-mutation's status field still lets a
-                // submitter submit a draft via status; submitSubmission (Submit) is
-                // the intent-shaped replacement.
+                // A submitter may still set status while the work is theirs (DRAFT);
+                // submitSubmission (Submit) is the dedicated forward action, but
+                // changeSubmissionStatus stays open to them for a draft. Candidate
+                // to retire in the matrix refinement now that submit is its own gate.
                 [SubmissionAbility::UpdateStatus, SubmissionIsDraft::class],
             ],
         };

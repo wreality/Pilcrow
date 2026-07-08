@@ -9,9 +9,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * A submission comment — inline or overall, top-level or reply (replies are
  * same-table rows). The common type {@see \App\Models\InlineComment} and
  * {@see \App\Models\OverallComment} share so authorization can treat them
- * uniformly: one {@see \App\Policies\CommentPolicy} and one
- * {@see \App\Auth\Grants\Predicates\OwnsCommentWhileReviewable} predicate cover
- * both, keyed off authorship (`created_by`) and the owning submission.
+ * uniformly: a comment-scoped {@see \App\Auth\Abilities\CommentAbility},
+ * resolved through {@see \App\Auth\ScopedAbilityResolver} with the
+ * {@see \App\Auth\Grants\Predicates\OwnsCommentWhileReviewable} predicate, covers
+ * both — keyed off authorship (`created_by`) and the owning submission.
  *
  * @property int|null $created_by The author's user id.
  */
