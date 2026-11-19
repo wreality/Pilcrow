@@ -31,6 +31,7 @@ jobs:
       js: ${{ steps.filter.outputs.js }}
       client: ${{ steps.filter.outputs.client }}
       playwright: ${{ steps.filter.outputs.playwright }}
+      e2e: ${{ steps.filter.outputs.e2e }}
       api: ${{ steps.filter.outputs.api }}
       md: ${{ steps.filter.outputs.md }}
     steps:
@@ -51,6 +52,17 @@ jobs:
               - '!**/*.md'
             playwright:
               - 'playwright/**'
+              - '!**/*.md'
+            e2e:
+              - 'client/**'
+              - 'backend/**'
+              - 'playwright/**'
+              - 'docker-compose*.y*ml'
+              - 'docker-bake.hcl'
+              - 'ci.env'
+              - '.github/actions/start-stack/**'
+              - '.github/workflows/do-test-e2e-playwright.yml'
+              - '.github/workflows/testing.yml'
               - '!**/*.md'
             api:
               - 'backend/**'
@@ -269,8 +281,9 @@ jobs:
           header: patch-coverage-backend
           path: patch-coverage-backend.trimmed.md
   e2e-playwright:
-    name: "E2E Test (Playwright)"
-    needs: [build-images]
+    name: "E2E Test"
+    needs: [changes, build-images]
+    if: ${{ needs.changes.outputs.e2e == 'true' }}
     uses: ./.github/workflows/do-test-e2e-playwright.yml
     secrets: inherit
     with:
@@ -303,6 +316,25 @@ jobs:
       - uses: mesh-research/github-actions/build-image@v2
         with:
           target: "web-lint-ci"
+  lint-playwright:
+    name: Playwright Lint
+    runs-on: ubuntu-24.04
+    needs: [changes]
+    if: ${{ needs.changes.outputs.playwright == 'true' }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: yarn
+          cache-dependency-path: playwright/yarn.lock
+      - name: Install dependencies
+        run: cd playwright && yarn install --frozen-lockfile
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
+      - name: Lint and typecheck
+        run: cd playwright && yarn validate
   docs-build:
     name: Docs Build
     runs-on: ubuntu-24.04

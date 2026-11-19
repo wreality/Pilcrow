@@ -13,12 +13,17 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4]
+        # Each shard pays about a minute of fixed setup (stack start, browser
+        # install) to run well under a minute of tests. Add shards only when
+        # the test step grows past that overhead.
+        shard: [1, 2]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: "22"
+          cache: yarn
+          cache-dependency-path: playwright/yarn.lock
       - uses: ./.github/actions/start-stack
         with:
           version: ${{ inputs.version }}
@@ -35,11 +40,21 @@ jobs:
           docker compose exec -T phpfpm php artisan lighthouse:clear-cache
           docker compose exec -T phpfpm php artisan lighthouse:cache
       - name: Install dependencies
-        run: cd playwright && yarn install
+        run: cd playwright && yarn install --frozen-lockfile
+      - name: Cache Playwright browsers
+        id: browser-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ runner.os }}-${{ hashFiles('playwright/yarn.lock') }}
       - name: Install Playwright browsers
+        if: ${{ steps.browser-cache.outputs.cache-hit != 'true' }}
         run: cd playwright && npx playwright install --with-deps chromium
+      - name: Install Playwright system dependencies
+        if: ${{ steps.browser-cache.outputs.cache-hit == 'true' }}
+        run: cd playwright && npx playwright install-deps chromium
       - name: Run Playwright tests
-        run: cd playwright && npx playwright test --project=chromium --shard=${{ matrix.shard }}/4
+        run: cd playwright && npx playwright test --project=chromium --shard=${{ matrix.shard }}/${{ strategy.job-total }}
         env:
           PLAYWRIGHT_BASE_URL: http://localhost:8888
       - name: Upload blob report
@@ -49,6 +64,14 @@ jobs:
           name: blob-report-${{ matrix.shard }}
           path: playwright/blob-report/
           retention-days: 1
+      - name: Upload copywriting screenshots
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots-${{ matrix.shard }}
+          path: playwright/screenshots/
+          if-no-files-found: ignore
+          retention-days: 14
       - name: Upload test results
         if: failure()
         uses: actions/upload-artifact@v4
@@ -66,12 +89,16 @@ jobs:
     runs-on: ubuntu-24.04
     name: "Merge Playwright Reports"
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: "22"
+          cache: yarn
+          cache-dependency-path: playwright/yarn.lock
       - name: Install dependencies
-        run: cd playwright && yarn install
+        run: cd playwright && yarn install --frozen-lockfile
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
       - name: Download blob reports
         uses: actions/download-artifact@v4
         with:
