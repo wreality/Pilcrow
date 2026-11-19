@@ -18,10 +18,8 @@ async function showAllRecords(page: Page) {
 
 test("regular user: submissions page", async ({
   page,
-  resetDatabase,
   loginAs,
 }) => {
-  await resetDatabase();
   await loginAs("regularuser@meshresearch.net", "/submissions");
   await page.getByTestId("submissions_title").waitFor();
 
@@ -34,22 +32,25 @@ test("regular user: submissions page", async ({
       loginAs("applicationadministrator@meshresearch.net", "/submissions"),
       waitForGQLOperation(page, "GetPublications"),
     ]);
-    await qSelectOpen(page, "publications_select");
-    const items = await qSelectItems(page, "publications_select");
-    await items.nth(0).click();
+    // The select re-renders when the publications query lands, which can
+    // swallow a click made just before it. Retry until an option is chosen.
+    await expect(async () => {
+      await qSelectOpen(page, "publications_select");
+      const items = await qSelectItems(page, "publications_select");
+      await items.nth(0).click({ timeout: 2_000 });
+    }).toPass();
     await page.getByTestId("submit_work_btn").click();
     await expect(
       page.getByTestId("submission_create_subheading"),
     ).toContainText("Pilcrow Test Publication 1");
+    await checkA11y(page);
   });
 });
 
 test("non-submitter roles: draft submissions are hidden", async ({
   page,
-  resetDatabase,
   loginAs,
 }) => {
-  await resetDatabase();
 
   await test.step("hidden from reviewers", async () => {
     await loginAs("reviewer@meshresearch.net", "/submissions");
@@ -75,10 +76,8 @@ test("non-submitter roles: draft submissions are hidden", async ({
 
 test("regular user: export and status actions", async ({
   page,
-  resetDatabase,
   loginAs,
 }) => {
-  await resetDatabase();
   await loginAs("regularuser@meshresearch.net", "/submissions");
   await showAllRecords(page);
 

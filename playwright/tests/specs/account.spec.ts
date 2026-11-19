@@ -3,10 +3,8 @@ import { checkA11y } from "@helpers/a11y";
 
 test("regular user: profile", async ({
   page,
-  resetDatabase,
   loginAs,
 }) => {
-  await resetDatabase();
   await loginAs("regularuser@meshresearch.net", "/account/profile");
 
   await test.step("page is accessible", async () => {
@@ -20,6 +18,12 @@ test("regular user: profile", async ({
     await page.getByTestId("update_user_username").fill("updatedUser");
     await page.getByTestId("button_save").click();
     await expect(page.getByTestId("button_saved")).toContainText("Saved");
+
+    await page.reload();
+    await expect(page.getByTestId("avatar_name")).toContainText("Updated User");
+    await expect(page.getByTestId("avatar_username")).toContainText(
+      "updatedUser",
+    );
   });
 
   await test.step("update position title", async () => {
@@ -29,6 +33,9 @@ test("regular user: profile", async ({
     await expect(page.getByTestId("button_save")).toBeVisible();
     await page.getByTestId("button_save").click();
     await expect(page.getByTestId("button_saved")).toContainText("Saved");
+
+    await page.reload();
+    await expect(page.getByTestId("position_title")).toHaveValue(value);
   });
 
   await test.step("update facebook username", async () => {
@@ -37,6 +44,9 @@ test("regular user: profile", async ({
     await expect(page.getByTestId("button_save")).toBeVisible();
     await page.getByTestId("button_save").click();
     await expect(page.getByTestId("button_saved")).toContainText("Saved");
+
+    await page.reload();
+    await expect(page.getByTestId("facebook")).toHaveValue(value);
   });
 
   await test.step("add and reorder websites", async () => {
@@ -63,10 +73,8 @@ test("regular user: profile", async ({
 
 test("regular user: settings", async ({
   page,
-  resetDatabase,
   loginAs,
 }) => {
-  await resetDatabase();
   await loginAs("settingsuser@meshresearch.net", "/account/settings");
   await page.getByTestId("page_heading").waitFor();
 
@@ -81,6 +89,7 @@ test("regular user: settings", async ({
     const notify = page.getByTestId("update_user_notify");
     await expect(notify).toBeVisible();
     await expect(notify).toHaveClass(/bg-positive/);
+    await checkA11y(page);
   });
 
   await test.step("update password", async () => {
@@ -90,5 +99,6 @@ test("regular user: settings", async ({
     const notify = page.getByTestId("update_user_notify");
     await expect(notify).toBeVisible();
     await expect(notify).toHaveClass(/bg-positive/);
+    await checkA11y(page);
   });
 });

@@ -31,7 +31,8 @@ type PilcrowFixtures = {
     goto: string,
     options?: LoginAsOptions,
   ) => Promise<void>;
-  resetDatabase: () => Promise<void>;
+  /** Auto fixture: gives every test a fresh copy of the seeded database. */
+  isolatedDatabase: void;
   seedSubmission: (options?: SeedSubmissionOptions) => Promise<string>;
 };
 
@@ -43,9 +44,11 @@ const WORKER_TOKEN = `pw-${randomUUID()}`;
 
 /**
  * Cache of post-login cookies (and resolved username) keyed by email.
- * Laravel uses file-based sessions, so cookies are valid across all
- * workers and shadow tables. The first loginAs call for a user fills
- * the cache; subsequent calls skip CSRF + login and just inject cookies.
+ * The cache lives in this worker process and is not shared with other
+ * workers. Laravel uses file-based sessions, so a cached session survives
+ * the per-test shadow-table reset. The first loginAs call for a user fills
+ * the cache; later calls in the same worker skip CSRF + login and just
+ * inject cookies.
  */
 type CachedSession = {
   cookies: Awaited<ReturnType<APIRequestContext["storageState"]>>["cookies"];
@@ -150,45 +153,48 @@ export const test = base.extend<PilcrowFixtures>({
           }
         };
 
-        const tryLoginAndNavigate = async (
+        /**
+         * Ask the API whether a cached session is still logged in. This is
+         * a direct request, so a slow page render can't be mistaken for a
+         * dead session.
+         */
+        const sessionIsAlive = async (
           session: CachedSession,
         ): Promise<boolean> => {
-          await page.goto("about:blank");
-          await page.context().clearCookies();
-          await page.context().addCookies(session.cookies);
-          await page.goto(`${origin}${goto}`);
-          // Use a short timeout — if the cached session is dead, the
-          // dropdown_username will never show, and we want to fall back fast.
+          const apiCtx = await pwRequest.newContext({
+            baseURL: origin,
+            ignoreHTTPSErrors: true,
+            extraHTTPHeaders: { "X-Test-Token": WORKER_TOKEN },
+            storageState: { cookies: session.cookies, origins: [] },
+          });
           try {
-            await expect(
-              page.getByTestId("dropdown_username"),
-            ).toContainText(session.username, {
-              ignoreCase: true,
-              timeout: 2_000,
+            const resp = await apiCtx.post("/graphql", {
+              data: { query: "{ currentUser { username } }" },
             });
-            return true;
+            const json = await resp.json();
+            return json.data?.currentUser?.username === session.username;
           } catch {
             return false;
+          } finally {
+            await apiCtx.dispose();
           }
         };
 
         // eslint-disable-next-line playwright/no-conditional-in-test -- session cache lookup, not test logic
         let cached = options?.noCache ? undefined : sessionCache.get(cacheKey);
-        // eslint-disable-next-line playwright/no-conditional-in-test -- session cache hit path
-        if (cached && (await tryLoginAndNavigate(cached))) {
-          return;
+        // eslint-disable-next-line playwright/no-conditional-in-test -- cache miss or stale session
+        if (!cached || !(await sessionIsAlive(cached))) {
+          cached = await performLogin();
+          // eslint-disable-next-line playwright/no-conditional-in-test -- cache write/clear based on noCache option
+          if (!options?.noCache) {
+            sessionCache.set(cacheKey, cached);
+          } else {
+            // Caller is going to invalidate this session; drop any cached
+            // entry so later tests in this worker don't try to reuse it.
+            sessionCache.delete(cacheKey);
+          }
         }
 
-        // Cache miss, stale, or noCache requested — fresh login.
-        cached = await performLogin();
-        // eslint-disable-next-line playwright/no-conditional-in-test -- cache write/clear based on noCache option
-        if (!options?.noCache) {
-          sessionCache.set(cacheKey, cached);
-        } else {
-          // Caller is going to invalidate this session; remove any
-          // existing cached entry so other workers don't try to use it.
-          sessionCache.delete(cacheKey);
-        }
         await page.goto("about:blank");
         await page.context().clearCookies();
         await page.context().addCookies(cached.cookies);
@@ -203,21 +209,24 @@ export const test = base.extend<PilcrowFixtures>({
   },
 
   /**
-   * Create shadow tables before the test. Each test gets a fresh copy
-   * of the seeded database.
+   * Recreate this worker's shadow tables before every test, so each test
+   * starts from a fresh copy of the seeded database. Runs automatically.
    */
-  resetDatabase: async ({ baseURL }, use) => {
-    await setupToken(baseURL!);
+  isolatedDatabase: [
+    async ({ baseURL }, use) => {
+      await setupToken(baseURL!);
 
-    await use(async () => {});
+      await use();
 
-    // No teardown needed — setupToken drops stale tables before creating new ones.
-    // This avoids race conditions where in-flight browser requests hit dropped tables.
-  },
+      // No teardown needed — setupToken drops stale tables before creating new ones.
+      // This avoids race conditions where in-flight browser requests hit dropped tables.
+    },
+    { auto: true },
+  ],
 
   /**
-   * Create an isolated test submission. Tracked by the change tracker
-   * and rolled back automatically after the test via resetDatabase teardown.
+   * Create a test submission in this worker's shadow tables. It disappears
+   * when the next test recreates them.
    */
   seedSubmission: async ({ baseURL }, use) => {
     const fn = async (options?: SeedSubmissionOptions): Promise<string> => {

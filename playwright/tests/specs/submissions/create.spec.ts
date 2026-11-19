@@ -4,10 +4,8 @@ import { expectNotification } from "@helpers/quasar";
 
 test("app admin: submission creation", async ({
   page,
-  resetDatabase,
   loginAs,
 }) => {
-  await resetDatabase();
   await loginAs("applicationadministrator@meshresearch.net", "/publication/1/create");
   await page.getByTestId("create_submission_form").waitFor({ timeout: 10_000 });
 
@@ -29,6 +27,7 @@ test("app admin: submission creation", async ({
       "The maximum length has been exceeded for the title",
     );
     await expectNotification(page, "negative", "submission_create_notify");
+    await checkA11y(page);
   });
 
   await test.step("title must not be empty", async () => {
@@ -43,6 +42,7 @@ test("app admin: submission creation", async ({
       "A title is required to create a submission.",
     );
     await expectNotification(page, "negative", "submission_create_notify");
+    await checkA11y(page);
   });
 
   await test.step("acknowledgement must be checked", async () => {
@@ -59,6 +59,7 @@ test("app admin: submission creation", async ({
       "You must acknowledge you have read and understand the guidelines.",
     );
     await expectNotification(page, "negative", "submission_create_notify");
+    await checkA11y(page);
   });
 
   await test.step("successful submission creation", async () => {
@@ -67,5 +68,6 @@ test("app admin: submission creation", async ({
     await expect(page.getByTestId("submission_title")).toContainText(
       "Test Submission",
     );
+    await checkA11y(page);
   });
 });

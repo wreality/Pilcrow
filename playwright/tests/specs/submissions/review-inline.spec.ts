@@ -1,35 +1,13 @@
-import type { Page } from "@playwright/test";
 import { test, expect } from "@fixtures/base";
 import { waitForGQLOperation } from "@helpers/graphql";
+import { ensureInlineCommentsOpen } from "@helpers/review";
 
 const SUBMISSION_ID = 114;
 
-/**
- * Ensure inline comments panel is visible.
- * On wide viewports it's open by default; on narrow ones we toggle it.
- */
-async function ensureInlineCommentsOpen(page: Page) {
-  await page.getByTestId("submission-content").waitFor({ state: "visible" });
-  const visible = await page
-    .getByTestId("inlineComment")
-    .first()
-    .isVisible()
-    .catch(() => false);
-  if (!visible) {
-    await page.getByTestId("toggleInlineCommentsButton").click();
-    await page
-      .getByTestId("inlineComment")
-      .first()
-      .waitFor({ state: "visible" });
-  }
-}
-
 test("reviewer: inline comment interactions", async ({
   page,
-  resetDatabase,
   loginAs,
 }) => {
-  await resetDatabase();
   await loginAs("reviewer@meshresearch.net", `/submission/${SUBMISSION_ID}/review`);
   await page.getByTestId("submission_review_layout").waitFor();
   await ensureInlineCommentsOpen(page);
@@ -48,7 +26,7 @@ test("reviewer: inline comment interactions", async ({
         .getByTestId("inlineCommentReplyEditor")
         .locator("button[type=submit]")
         .click(),
-      waitForGQLOperation(page, "CreateInlineCommentReply"),
+      waitForGQLOperation(page, "CreateInlineComment"),
       waitForGQLOperation(page, "GetSubmissionReview"),
     ]);
     await expect(firstComment.getByTestId("inlineCommentReply")).toHaveCount(2);
@@ -60,8 +38,8 @@ test("reviewer: inline comment interactions", async ({
   await test.step("bubble widgets activate inline comments", async () => {
     await page.goto(`/submission/${SUBMISSION_ID}/review`);
     await ensureInlineCommentsOpen(page);
+    await expect(page.getByTestId("comment-widget")).not.toHaveCount(0);
     const widgetCount = await page.getByTestId("comment-widget").count();
-    expect(widgetCount).toBeGreaterThan(0);
 
     for (let i = 0; i < widgetCount; i++) {
       await page.getByTestId("comment-widget").nth(i).click();
@@ -75,6 +53,7 @@ test("reviewer: inline comment interactions", async ({
   await test.step("highlights activate inline comments", async () => {
     await page.goto(`/submission/${SUBMISSION_ID}/review`);
     await ensureInlineCommentsOpen(page);
+    await expect(page.getByTestId("comment-highlight")).not.toHaveCount(0);
     const highlightCount = await page.getByTestId("comment-highlight").count();
 
     for (let i = 0; i < highlightCount; i++) {
@@ -89,10 +68,8 @@ test("reviewer: inline comment interactions", async ({
 
 test("reviewer: inline comment modification", async ({
   page,
-  resetDatabase,
   loginAs,
 }) => {
-  await resetDatabase();
   await loginAs("applicationadministrator@meshresearch.net", `/submission/${SUBMISSION_ID}/review`);
   await ensureInlineCommentsOpen(page);
 
@@ -139,7 +116,7 @@ test("reviewer: inline comment modification", async ({
       secondComment
         .locator("[data-cy='inlineCommentReplyEditor'] button[type=submit]")
         .click(),
-      waitForGQLOperation(page, "CreateInlineCommentReply"),
+      waitForGQLOperation(page, "CreateInlineComment"),
       waitForGQLOperation(page, "GetSubmissionReview"),
     ]);
 
@@ -161,7 +138,7 @@ test("reviewer: inline comment modification", async ({
         .getByTestId("modifyInlineCommentReplyEditor")
         .locator("button[type=submit]")
         .click(),
-      waitForGQLOperation(page, "UpdateInlineCommentReply"),
+      waitForGQLOperation(page, "UpdateInlineComment"),
       waitForGQLOperation(page, "GetSubmissionReview"),
     ]);
     await expect(

@@ -5,10 +5,8 @@ import { qSelectItems, expectNotification } from "@helpers/quasar";
 
 test("publication admin: assignment management", async ({
   page,
-  resetDatabase,
   loginAs,
 }) => {
-  await resetDatabase();
   await loginAs("publicationadministrator@meshresearch.net", "/submission/113/details");
   await page.getByTestId("submitters_list").waitFor();
 
@@ -22,12 +20,13 @@ test("publication admin: assignment management", async ({
     const items = await qSelectItems(reviewersList, "input_user");
     await items.nth(0).click();
     const updatePromise = waitForGQLOperation(page, "UpdateSubmissionReviewers");
-    await reviewersList.getByTestId("button-assign").dispatchEvent("click");
+    await reviewersList.getByTestId("button-assign").click();
     await updatePromise;
     await expect(reviewersList.locator(".q-list")).toContainText(
       "Application Administrator",
     );
     await expectNotification(page, "positive");
+    await checkA11y(page);
   });
 
   await test.step("disallow duplicate reviewer assignment", async () => {
@@ -36,10 +35,11 @@ test("publication admin: assignment management", async ({
     const items = await qSelectItems(reviewersList, "input_user");
     await items.nth(0).click();
     const updatePromise = waitForGQLOperation(page, "UpdateSubmissionReviewers");
-    await reviewersList.getByTestId("button-assign").dispatchEvent("click");
+    await reviewersList.getByTestId("button-assign").click();
     await updatePromise;
     await expect(reviewersList.locator(".q-item")).toHaveCount(2);
     await expectNotification(page, "negative");
+    await checkA11y(page);
   });
 
   await test.step("remove review coordinator", async () => {
@@ -64,7 +64,7 @@ test("publication admin: assignment management", async ({
     await items.first().waitFor();
     await items.first().click();
     const negativePromise = waitForGQLOperation(page, "UpdateSubmissionReviewCoordinators");
-    await coordList.getByTestId("button-assign").dispatchEvent("click");
+    await coordList.getByTestId("button-assign").click();
     await negativePromise;
     await expectNotification(page, "negative");
     await coordList.locator("input").first().click();
@@ -77,12 +77,13 @@ test("publication admin: assignment management", async ({
     const items = await qSelectItems(coordList, "input_user");
     await items.nth(0).click();
     const updatePromise = waitForGQLOperation(page, "UpdateSubmissionReviewCoordinators");
-    await coordList.getByTestId("button-assign").dispatchEvent("click");
+    await coordList.getByTestId("button-assign").click();
     await updatePromise;
     await expect(coordList.locator(".q-list")).toContainText(
       "Review Coordinator",
     );
     await expectNotification(page, "positive");
+    await checkA11y(page);
   });
 
   await test.step("remove added reviewer", async () => {
@@ -108,7 +109,7 @@ test("publication admin: assignment management", async ({
     await items.first().waitFor();
     await items.first().click();
     const updatePromise = waitForGQLOperation(page, "UpdateSubmissionReviewers");
-    await reviewersList.getByTestId("button-assign").dispatchEvent("click");
+    await reviewersList.getByTestId("button-assign").click();
     await updatePromise;
     await expectNotification(page, "negative");
     await page.keyboard.press("Escape");
@@ -117,10 +118,8 @@ test("publication admin: assignment management", async ({
 
 test("publication admin: status change comments in activity", async ({
   page,
-  resetDatabase,
   loginAs,
 }) => {
-  await resetDatabase();
   await loginAs("publicationadministrator@meshresearch.net", "/submission/108/review");
 
   await test.step("add status change comments", async () => {
@@ -164,10 +163,8 @@ test("publication admin: status change comments in activity", async ({
 
 test("review coordinator: assignment management", async ({
   page,
-  resetDatabase,
   loginAs,
 }) => {
-  await resetDatabase();
   await loginAs("reviewcoordinator@meshresearch.net", "/submission/113/details");
 
   await test.step("can assign reviewers", async () => {
@@ -177,12 +174,13 @@ test("review coordinator: assignment management", async ({
     await items.first().waitFor();
     await items.nth(0).click();
     const updatePromise = waitForGQLOperation(page, "UpdateSubmissionReviewers");
-    await reviewersList.getByTestId("button-assign").dispatchEvent("click");
+    await reviewersList.getByTestId("button-assign").click();
     await updatePromise;
     await expect(reviewersList.locator(".q-list")).toContainText(
       "Application Administrator",
     );
     await expectNotification(page, "positive");
+    await checkA11y(page);
   });
 
   await test.step("invitation form is visible", async () => {
@@ -192,42 +190,49 @@ test("review coordinator: assignment management", async ({
   await test.step("invite unregistered reviewer", async () => {
     const reviewersList = page.getByTestId("reviewers_list");
     await reviewersList.locator("input").first().clear();
+    const searchPromise = waitForGQLOperation(page, "SearchUsers", {
+      variables: (v) => v.term === "scholarlystranger@gmail.com",
+    });
     await userSearch(
       reviewersList.locator("input").first(),
       "scholarlystranger@gmail.com",
     );
-    await waitForGQLOperation(page, "SearchUsers");
-    await reviewersList.getByTestId("button-assign").dispatchEvent("click");
+    await searchPromise;
+    await reviewersList.getByTestId("button-assign").click();
 
     await expect(reviewersList.locator(".q-list")).toContainText("stranger");
+    await checkA11y(page);
   });
 
   await test.step("reinvite unconfirmed reviewer", async () => {
-    await page.getByTestId("user_unconfirmed").dispatchEvent("click");
+    await page.getByTestId("user_unconfirmed").click();
     await page.getByTestId("dirtyYesReinviteUser").click();
     await expectNotification(page, "positive");
+    await checkA11y(page);
   });
 
   await test.step("disallow invitation for invalid email", async () => {
     await page.goto("/submission/113/details");
     const reviewersList = page.getByTestId("reviewers_list");
     await reviewersList.locator("input").first().clear();
+    const searchPromise = waitForGQLOperation(page, "SearchUsers", {
+      variables: (v) => v.term === "invalidemail",
+    });
     await userSearch(reviewersList.locator("input").first(), "invalidemail");
-    await waitForGQLOperation(page, "SearchUsers");
+    await searchPromise;
     const invitePromise = waitForGQLOperation(page, "InviteReviewer");
-    await reviewersList.getByTestId("button-assign").dispatchEvent("click");
+    await reviewersList.getByTestId("button-assign").click();
     await invitePromise;
     await expect(reviewersList.locator(".q-item")).toHaveCount(3);
     await expectNotification(page, "negative");
+    await checkA11y(page);
   });
 });
 
 test("reviewer: submission details restrictions", async ({
   page,
-  resetDatabase,
   loginAs,
 }) => {
-  await resetDatabase();
   await loginAs("reviewer@meshresearch.net", "/submission/113/details");
 
   await test.step("invitation form is hidden", async () => {
@@ -241,10 +246,8 @@ test("reviewer: submission details restrictions", async ({
 // title editor. Re-enable once renaming has a working surface again.
 test.fixme("submitter: update submission title", async ({
   page,
-  resetDatabase,
   loginAs,
 }) => {
-  await resetDatabase();
   await loginAs("regularuser@meshresearch.net", "/submission/111/details");
   const gqlPromise = waitForGQLOperation(page, "UpdateSubmissionTitle");
   await page.getByTestId("submission_title").click();
@@ -259,10 +262,8 @@ test.fixme("submitter: update submission title", async ({
 
 test("submitter: submission details", async ({
   page,
-  resetDatabase,
   loginAs,
 }) => {
-  await resetDatabase();
   await loginAs("regularuser@meshresearch.net", "/submission/113/details");
 
   await test.step("export button disabled for under-review submission", async () => {

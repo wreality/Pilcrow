@@ -1,36 +1,14 @@
-import type { Page } from "@playwright/test";
 import { test, expect } from "@fixtures/base";
-import { checkA11y } from "@helpers/a11y";
+import { checkA11y, REVIEW_LAYOUT_DISABLED_RULES } from "@helpers/a11y";
 import { waitForGQLOperation } from "@helpers/graphql";
+import { ensureInlineCommentsOpen } from "@helpers/review";
 import { expectNotification } from "@helpers/quasar";
-
-/**
- * Ensure inline comments panel is visible.
- * On wide viewports it's open by default; on narrow ones we toggle it.
- */
-async function ensureInlineCommentsOpen(page: Page) {
-  await page.getByTestId("submission-content").waitFor({ state: "visible" });
-  const visible = await page
-    .getByTestId("inlineComment")
-    .first()
-    .isVisible()
-    .catch(() => false);
-  if (!visible) {
-    await page.getByTestId("toggleInlineCommentsButton").click();
-    await page
-      .getByTestId("inlineComment")
-      .first()
-      .waitFor({ state: "visible" });
-  }
-}
 
 test("reviewer: comments and interactions", async ({
   page,
-  resetDatabase,
   seedSubmission,
   loginAs,
 }) => {
-  await resetDatabase();
   const subId = await seedSubmission({
     status: "UNDER_REVIEW",
     title: "Reviewer Comment Test",
@@ -41,6 +19,7 @@ test("reviewer: comments and interactions", async ({
   await test.step("page accessibility", async () => {
     await checkA11y(page, {
       exclude: ['[data-cy="submission-content"'],
+      disableRules: REVIEW_LAYOUT_DISABLED_RULES,
     });
   });
 
@@ -71,7 +50,7 @@ test("reviewer: comments and interactions", async ({
   await test.step("reply to overall comment", async () => {
     const replyPromise = waitForGQLOperation(
       page,
-      "CreateOverallCommentReply",
+      "CreateOverallComment",
     );
     const firstComment = page.getByTestId("overallComment").first();
     await firstComment.getByTestId("overallCommentReplyButton").click();
@@ -108,7 +87,7 @@ test("reviewer: comments and interactions", async ({
     await page.getByTestId("quoteReply").click();
     const replyToReplyPromise = waitForGQLOperation(
       page,
-      "CreateOverallCommentReply",
+      "CreateOverallComment",
     );
     await page
       .getByTestId("overallCommentReplyEditor")
@@ -125,6 +104,9 @@ test("reviewer: comments and interactions", async ({
     await expect(
       commentForQuoteReply.getByTestId("overallCommentReply"),
     ).toHaveCount(2);
+    await expect(
+      commentForQuoteReply.getByTestId("overallCommentReply").last(),
+    ).toContainText("This is a reply to a reply.");
   });
 
   await test.step("export button disabled for under-review submission", async () => {
@@ -137,11 +119,17 @@ test("reviewer: comments and interactions", async ({
 
 test("reviewer: comment ownership and deletion", async ({
   page,
-  resetDatabase,
   loginAs,
 }) => {
-  await resetDatabase();
   await loginAs("reviewer@meshresearch.net", "/submission/100/review");
+
+  await test.step("page with comments is accessible", async () => {
+    await page.getByTestId("overallComment").first().waitFor();
+    await checkA11y(page, {
+      exclude: ['[data-cy="submission-content"'],
+      disableRules: REVIEW_LAYOUT_DISABLED_RULES,
+    });
+  });
 
   await test.step("cannot modify other users' overall comments", async () => {
     await page
@@ -227,7 +215,7 @@ test("reviewer: comment ownership and deletion", async ({
         .first()
         .locator("button[type=submit]")
         .click(),
-      waitForGQLOperation(page, "CreateOverallCommentReply"),
+      waitForGQLOperation(page, "CreateOverallComment"),
       waitForGQLOperation(page, "GetSubmissionReview"),
     ]);
 
@@ -246,7 +234,7 @@ test("reviewer: comment ownership and deletion", async ({
   await test.step("create and modify own reply", async () => {
     const replyPromise = waitForGQLOperation(
       page,
-      "CreateOverallCommentReply",
+      "CreateOverallComment",
     );
     const refetchPromise = waitForGQLOperation(page, "GetSubmissionReview");
     const firstComment = page.getByTestId("overallComment").first();
@@ -279,7 +267,7 @@ test("reviewer: comment ownership and deletion", async ({
     await replyEditor.click({ clickCount: 3 });
     await page.keyboard.type("Modified reviewer reply.");
 
-    const updatePromise = waitForGQLOperation(page, "UpdateOverallCommentReply");
+    const updatePromise = waitForGQLOperation(page, "UpdateOverallComment");
     const refetchPromise2 = waitForGQLOperation(page, "GetSubmissionReview");
     await page
       .getByTestId("modifyOverallCommentReplyEditor")
@@ -295,12 +283,10 @@ test("reviewer: comment ownership and deletion", async ({
 
 test("review coordinator: status management", async ({
   page,
-  resetDatabase,
   seedSubmission,
   loginAs,
 }) => {
   test.setTimeout(60_000);
-  await resetDatabase();
   const subInitial = await seedSubmission({ status: "INITIALLY_SUBMITTED" });
   const subAwaiting = await seedSubmission({ status: "AWAITING_REVIEW" });
   const subRejected = await seedSubmission({ status: "REJECTED" });
@@ -308,6 +294,9 @@ test("review coordinator: status management", async ({
     status: "RESUBMISSION_REQUESTED",
   });
   const subAccepted = await seedSubmission({ status: "ACCEPTED_AS_FINAL" });
+  const subAcceptedToDelete = await seedSubmission({
+    status: "ACCEPTED_AS_FINAL",
+  });
   const subDraft = await seedSubmission({
     status: "DRAFT",
     withContent: false,
@@ -397,6 +386,7 @@ test("review coordinator: status management", async ({
     );
     await page.getByTestId("status-dropdown").click();
     await expect(page.getByTestId("archive")).toBeVisible();
+    await expect(page.getByTestId("delete")).toBeVisible();
     await page.getByTestId("archive").click();
     await page
       .getByTestId("dirtyYesChangeStatus")
@@ -424,6 +414,23 @@ test("review coordinator: status management", async ({
     await expect(page.getByTestId("status-dropdown")).toHaveCount(0);
   });
 
+  await test.step("delete accepted submission directly", async () => {
+    await page.goto(`/submission/${subAcceptedToDelete}/review`);
+    await expect(page.getByTestId("submission_status")).toContainText(
+      "Accepted as Final",
+    );
+    await page.getByTestId("status-dropdown").click();
+    await page.getByTestId("delete").click();
+    await page
+      .getByTestId("dirtyYesChangeStatus")
+      .waitFor({ state: "visible" });
+    await page.getByTestId("dirtyYesChangeStatus").click();
+    await expect(page.getByTestId("submission_status")).toContainText(
+      "Deleted",
+    );
+    await expect(page.getByTestId("status-dropdown")).toHaveCount(0);
+  });
+
   await test.step("draft with no content shows explanation", async () => {
     await loginAs("regularuser@meshresearch.net", `/submission/${subDraft}/review`);
     await expect(page.getByTestId("explanation")).toBeVisible();
@@ -436,10 +443,8 @@ test("review coordinator: status management", async ({
 
 test("reviewer: footnote scrolling", async ({
   page,
-  resetDatabase,
   loginAs,
 }) => {
-  await resetDatabase();
   await loginAs("reviewer@meshresearch.net", "/submission/112/review");
 
   await test.step("scroll to footnote and back", async () => {
@@ -461,16 +466,15 @@ test("reviewer: footnote scrolling", async ({
   await test.step("page accessibility", async () => {
     await checkA11y(page, {
       exclude: ['[data-cy="submission-content"'],
+      disableRules: REVIEW_LAYOUT_DISABLED_RULES,
     });
   });
 });
 
 test("review coordinator: scroll to comments", async ({
   page,
-  resetDatabase,
   loginAs,
 }) => {
-  await resetDatabase();
   await loginAs("reviewcoordinator@meshresearch.net", "/submission/100/review");
 
   await test.step("scroll to 'View Overall Comments'", async () => {

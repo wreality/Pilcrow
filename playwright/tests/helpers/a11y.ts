@@ -6,12 +6,19 @@ import { expect } from "@playwright/test";
  * Global a11y rule overrides. Centralizes rules that are disabled or
  * excluded across all tests so they can be managed in one place.
  *
- * Add rules here when they represent known app-wide issues that should
- * be fixed but shouldn't block test runs.
+ * Add rules here only when they represent known app-wide issues that
+ * should be fixed but shouldn't block test runs. Prefer a per-page
+ * override so the rule keeps protecting every other page.
  */
-const GLOBAL_DISABLED_RULES = [
-  "button-name", // Quasar components sometimes lack button labels
-  "landmark-complementary-is-top-level", // Aside within main in review layout
+const GLOBAL_DISABLED_RULES: string[] = [];
+
+/**
+ * Rules to disable on the submission review page only. Its comment drawer
+ * is an <aside> nested inside <main>, which axe reports as
+ * landmark-complementary-is-top-level. Pass as `disableRules` there.
+ */
+export const REVIEW_LAYOUT_DISABLED_RULES = [
+  "landmark-complementary-is-top-level",
 ];
 
 const GLOBAL_EXCLUDES = [

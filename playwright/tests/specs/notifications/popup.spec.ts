@@ -3,11 +3,9 @@ import { waitForGQLOperation } from "@helpers/graphql";
 
 test("regular user: notification management", async ({
   page,
-  resetDatabase,
   seedSubmission,
   loginAs,
 }) => {
-  await resetDatabase();
   const subId = await seedSubmission({ status: "INITIALLY_SUBMITTED" });
 
   await test.step("generate a notification via status change", async () => {
@@ -38,12 +36,20 @@ test("regular user: notification management", async ({
     await page.goto("/dashboard");
     await page.getByTestId("dropdown_notificiations").click();
     await expect(page.getByTestId("notification_list_item").nth(0)).toBeVisible();
+    // The first item was read in the previous step; the second is still
+    // unread, so it is the one that proves "mark all" did something.
+    await expect(
+      page.getByTestId("notification_list_item").nth(1),
+    ).toHaveClass(/unread/);
     await Promise.all([
       page.getByTestId("dismiss_all_notifications").click(),
       waitForGQLOperation(page, "MarkAllNotificationsRead"),
     ]);
     await expect(
       page.getByTestId("notification_list_item").nth(0),
+    ).not.toHaveClass(/unread/);
+    await expect(
+      page.getByTestId("notification_list_item").nth(1),
     ).not.toHaveClass(/unread/);
   });
 });

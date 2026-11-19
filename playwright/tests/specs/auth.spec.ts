@@ -1,8 +1,7 @@
 import { test, expect } from "@fixtures/base";
 import { checkA11y } from "@helpers/a11y";
 
-test("guest: login page", async ({ page, resetDatabase }) => {
-  await resetDatabase();
+test("guest: login page", async ({ page }) => {
   await page.goto("/login");
 
   await test.step("page is accessible", async () => {
@@ -56,11 +55,12 @@ test("guest: login page", async ({ page, resetDatabase }) => {
     await form.getByTestId("password_field").fill("regularPassword!@#");
     await form.locator(".q-card__actions").getByText("Log In").click();
     await expect(page).toHaveURL(/\/dashboard/);
+    await page.getByTestId("vueDashboard").waitFor();
+    await checkA11y(page);
   });
 });
 
-test("guest: registration", async ({ page, resetDatabase }) => {
-  await resetDatabase();
+test("guest: registration", async ({ page }) => {
   await page.goto("/register");
 
   await test.step("page is accessible", async () => {
@@ -145,13 +145,23 @@ test("guest: registration", async ({ page, resetDatabase }) => {
   });
 });
 
+test("guest: registration submits with the enter key", async ({ page }) => {
+  await page.goto("/register");
+
+  const form = page.locator(".q-form");
+  await form.getByTestId("username_field").fill("newUserName");
+  await form.getByTestId("email_field").fill("newEmail@meshresearch.net");
+  await form.getByTestId("password_field").fill("password_field!@#12");
+  await form.getByTestId("password_field").press("Enter");
+
+  await expect(page).toHaveURL(/\/dashboard/);
+});
+
 test("regular user: header and logout", async ({
   page,
-  resetDatabase,
   loginAs,
   baseURL,
 }) => {
-  await resetDatabase();
 
   await test.step("unauthenticated header shows login and register links", async () => {
     await page.goto("/");
@@ -163,6 +173,16 @@ test("regular user: header and logout", async ({
     await expect(
       header.getByRole("link", { name: "Register" }),
     ).toHaveAttribute("href", "/register");
+  });
+
+  await test.step("login and register links navigate", async () => {
+    const header = page.locator("header");
+    await header.getByRole("link", { name: "Login" }).click();
+    await expect(page).toHaveURL(/\/login/);
+
+    await page.goto("/");
+    await header.getByRole("link", { name: "Register" }).click();
+    await expect(page).toHaveURL(/\/register/);
   });
 
   await test.step("authenticated header shows user menu", async () => {

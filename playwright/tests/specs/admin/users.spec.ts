@@ -3,10 +3,8 @@ import { checkA11y } from "@helpers/a11y";
 
 test("app admin: access control and page accessibility", async ({
   page,
-  resetDatabase,
   loginAs,
 }) => {
-  await resetDatabase();
 
   await test.step("regular users are denied access", async () => {
     await loginAs("regularuser@meshresearch.net", "/dashboard");

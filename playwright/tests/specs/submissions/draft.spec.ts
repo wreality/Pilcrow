@@ -8,10 +8,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 test("regular user: draft content management", async ({
   page,
-  resetDatabase,
   loginAs,
 }) => {
-  await resetDatabase();
   await loginAs("regularuser@meshresearch.net", "/submission/104/draft");
 
   await test.step("add content from text input", async () => {
@@ -39,10 +37,8 @@ test("regular user: draft content management", async ({
 
 test("regular user: draft file upload", async ({
   page,
-  resetDatabase,
   loginAs,
 }) => {
-  await resetDatabase();
   await loginAs("regularuser@meshresearch.net", "/submission/104/draft");
 
   await test.step("add content from file upload", async () => {
@@ -70,10 +66,8 @@ test("regular user: draft file upload", async ({
 
 test("regular user: draft preview and submission", async ({
   page,
-  resetDatabase,
   loginAs,
 }) => {
-  await resetDatabase();
   await loginAs("regularuser@meshresearch.net", "/submission/111/draft");
 
   await test.step("preview a draft submission", async () => {

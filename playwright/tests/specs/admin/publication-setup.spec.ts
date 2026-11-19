@@ -5,10 +5,8 @@ import { expectNotification, qSelectItems } from "@helpers/quasar";
 
 test("publication admin: access control", async ({
   page,
-  resetDatabase,
   loginAs,
 }) => {
-  await resetDatabase();
   await loginAs("publicationadministrator@meshresearch.net", "/publication/1/setup/basic");
 
   await test.step("can access own publication setup", async () => {
@@ -31,8 +29,7 @@ test("publication admin: access control", async ({
   });
 });
 
-test("app admin: user management", async ({ page, resetDatabase, loginAs }) => {
-  await resetDatabase();
+test("app admin: user management", async ({ page, loginAs }) => {
   await loginAs("applicationadministrator@meshresearch.net", "/publication/3/setup/users");
 
   const adminsList = page.getByTestId("admins_list");
@@ -54,6 +51,7 @@ test("app admin: user management", async ({ page, resetDatabase, loginAs }) => {
     gqlPromise = waitForGQLOperation(page, "UpdatePublicationAdmins");
     await adminsList.getByTestId("button_unassign").last().click();
     await gqlPromise;
+    await expect(adminsList).not.toContainText("Application Administrator");
   });
 
   await test.step("assign and remove an editor", async () => {
@@ -67,19 +65,19 @@ test("app admin: user management", async ({ page, resetDatabase, loginAs }) => {
     await expect(editorsList.locator(".q-list")).toContainText(
       "Application Administrator",
     );
+    await checkA11y(page);
 
     gqlPromise = waitForGQLOperation(page, "UpdatePublicationEditors");
     await editorsList.getByTestId("button_unassign").last().click();
     await gqlPromise;
+    await expect(editorsList).not.toContainText("Application Administrator");
   });
 });
 
 test("app admin: style criteria management", async ({
   page,
-  resetDatabase,
   loginAs,
 }) => {
-  await resetDatabase();
   await loginAs("applicationadministrator@meshresearch.net", "/publication/3/setup/criteria");
 
   await expect(page.getByTestId("listItem")).toHaveCount(4);
@@ -140,10 +138,8 @@ test("app admin: style criteria management", async ({
 
 test("app admin: basic settings and content", async ({
   page,
-  resetDatabase,
   loginAs,
 }) => {
-  await resetDatabase();
   await loginAs("applicationadministrator@meshresearch.net", "/publication/3");
 
   await test.step("publication details page accessibility", async () => {
@@ -210,10 +206,8 @@ test("app admin: basic settings and content", async ({
 
 test("app admin: publication creation and validation", async ({
   page,
-  resetDatabase,
   loginAs,
 }) => {
-  await resetDatabase();
   await loginAs("applicationadministrator@meshresearch.net", "/admin/publications");
 
   await test.step("rejects empty name", async () => {
@@ -229,6 +223,7 @@ test("app admin: publication creation and validation", async ({
     await page.getByTestId("new_publication_input").press("Enter");
     await expect(page.getByTestId("name_field_error")).toBeVisible();
     await expectNotification(page, "negative");
+    await checkA11y(page);
   });
 
   await test.step("creates a new publication", async () => {

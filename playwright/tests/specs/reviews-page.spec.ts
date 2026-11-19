@@ -15,10 +15,8 @@ async function showAllRecords(table: ReturnType<Page["getByTestId"]>) {
 
 test("review coordinator: reviews page", async ({
   page,
-  resetDatabase,
   loginAs,
 }) => {
-  await resetDatabase();
   await loginAs("reviewcoordinator@meshresearch.net", "/reviews");
   await page.getByTestId("submission_link_desktop").first().waitFor();
 
@@ -82,14 +80,19 @@ test("review coordinator: reviews page", async ({
     await expect(page).toHaveURL(/\/submission\/103\/details/);
     await expect(page.getByTestId("submission_title")).toBeVisible();
   });
+
+  await test.step("reviewer can access the accepted submission", async () => {
+    // Submission 101 is the "Initially Submitted" one accepted above.
+    await loginAs("reviewer@meshresearch.net", "/submission/101/review");
+    await expect(page).not.toHaveURL(/\/error403/);
+    await expect(page.getByTestId("submission_title")).toBeVisible();
+  });
 });
 
 test("reviewer: reviews page", async ({
   page,
-  resetDatabase,
   loginAs,
 }) => {
-  await resetDatabase();
   await loginAs("reviewer@meshresearch.net", "/reviews");
   await showAllRecords(page.getByTestId("reviewer_table"));
 

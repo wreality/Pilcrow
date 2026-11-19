@@ -1,6 +1,7 @@
 import type { Page } from "@playwright/test";
 import { test, expect } from "@fixtures/base";
 import { waitForGQLOperation } from "@helpers/graphql";
+import { ensureInlineCommentsOpen } from "@helpers/review";
 import type { SeededEmail } from "@helpers/users";
 
 /**
@@ -19,29 +20,10 @@ async function expectUnreadNotification(
   await expect(firstItem).toContainText(message);
 }
 
-/** Ensure inline comments panel is visible. */
-async function ensureInlineCommentsOpen(page: Page) {
-  await page.getByTestId("submission-content").waitFor({ state: "visible" });
-  const visible = await page
-    .getByTestId("inlineComment")
-    .first()
-    .isVisible()
-    .catch(() => false);
-  if (!visible) {
-    await page.getByTestId("toggleInlineCommentsButton").click();
-    await page
-      .getByTestId("inlineComment")
-      .first()
-      .waitFor({ state: "visible" });
-  }
-}
-
 test("comment notifications: overall comment recipients", async ({
   page,
-  resetDatabase,
   loginAs,
 }) => {
-  await resetDatabase();
 
   const notificationMessage =
     "Reviewer for Submission added a new overall comment to Pilcrow Test Submission 1";
@@ -85,10 +67,8 @@ test("comment notifications: overall comment recipients", async ({
 
 test("comment notifications: overall comment reply recipients", async ({
   page,
-  resetDatabase,
   loginAs,
 }) => {
-  await resetDatabase();
 
   const notificationMessage =
     "Reviewer for Submission replied to an overall comment for Pilcrow Test Submission 1";
@@ -97,7 +77,7 @@ test("comment notifications: overall comment reply recipients", async ({
     await loginAs("reviewer@meshresearch.net", "/submission/100/review");
     const replyPromise = waitForGQLOperation(
       page,
-      "CreateOverallCommentReply",
+      "CreateOverallComment",
     );
     await page.getByTestId("showRepliesButton").last().click();
     await page.getByTestId("overallCommentReplyButton").last().click();
@@ -152,10 +132,8 @@ test("comment notifications: overall comment reply recipients", async ({
 
 test("comment notifications: inline comment reply recipients", async ({
   page,
-  resetDatabase,
   loginAs,
 }) => {
-  await resetDatabase();
 
   const notificationMessage =
     "Reviewer for Submission replied to an inline comment for Pilcrow Test Submission 1";
@@ -173,7 +151,7 @@ test("comment notifications: inline comment reply recipients", async ({
 
     const replyPromise = waitForGQLOperation(
       page,
-      "CreateInlineCommentReply",
+      "CreateInlineComment",
     );
     await page
       .getByTestId("inlineCommentReplyEditor")

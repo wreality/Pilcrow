@@ -8,27 +8,45 @@ interface GqlOperation {
 /**
  * Wait for a GraphQL response matching the given operation name.
  * Handles both single and batched GraphQL requests.
+ *
+ * Start waiting BEFORE the action that sends the request, then await the
+ * returned promise afterwards. A wait registered after the response has
+ * arrived never resolves.
+ *
+ * Pass `variables` to match one specific request, e.g. the search for the
+ * full term rather than a keystroke on the way to it.
  */
 export function waitForGQLOperation(
   page: Page,
   operationName: string,
+  options?: {
+    timeout?: number;
+    variables?: (variables: Record<string, unknown>) => boolean;
+  },
 ): Promise<Response> {
-  return page.waitForResponse((response) => {
-    if (!response.url().endsWith("/graphql")) return false;
-    const request = response.request();
-    const postData = request.postData();
-    if (!postData) return false;
+  const matches = (op: GqlOperation) =>
+    op.operationName === operationName &&
+    (options?.variables?.(op.variables ?? {}) ?? true);
 
-    try {
-      const body = JSON.parse(postData) as GqlOperation | GqlOperation[];
-      if (Array.isArray(body)) {
-        return body.some((op) => op.operationName === operationName);
+  return page.waitForResponse(
+    (response) => {
+      if (!response.url().endsWith("/graphql")) return false;
+      const request = response.request();
+      const postData = request.postData();
+      if (!postData) return false;
+
+      try {
+        const body = JSON.parse(postData) as GqlOperation | GqlOperation[];
+        if (Array.isArray(body)) {
+          return body.some(matches);
+        }
+        return matches(body);
+      } catch {
+        return false;
       }
-      return body.operationName === operationName;
-    } catch {
-      return false;
-    }
-  });
+    },
+    { timeout: options?.timeout ?? 10_000 },
+  );
 }
 
 /**
@@ -45,8 +63,8 @@ export async function userSearch(
 }
 
 /**
- * Seed a test submission via GraphQL. The submission is tracked by the
- * change tracker and rolled back automatically after the test.
+ * Seed a test submission via GraphQL. It is written to the worker's shadow
+ * tables and disappears when the next test recreates them.
  *
  * @param status - GraphQL SubmissionStatus enum value, e.g. "UNDER_REVIEW", "REJECTED"
  * @returns The created submission's ID
