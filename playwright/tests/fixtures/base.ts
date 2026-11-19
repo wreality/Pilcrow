@@ -38,7 +38,7 @@ type PilcrowFixtures = {
 
 /**
  * Single token per worker process. All tests in this worker run sequentially
- * (fullyParallel: false), so there's no interleaving of changes/rollbacks.
+ * (fullyParallel: false), so one set of shadow tables per worker is enough.
  */
 const WORKER_TOKEN = `pw-${randomUUID()}`;
 
@@ -249,10 +249,18 @@ export const test = base.extend<PilcrowFixtures>({
   },
 
   /**
-   * Intercept ALL requests to the backend to include the X-Test-Token header.
-   * Also disables CSS animations/transitions.
+   * Send the worker's token with every request the browser context makes,
+   * so the backend routes them to this worker's shadow tables. Set on the
+   * context rather than one page so that extra pages or popups a test opens
+   * are covered too; a request without the token would write to the shared
+   * base tables.
    */
-  page: async ({ page, baseURL }, use) => {
+  extraHTTPHeaders: async ({ extraHTTPHeaders }, use) => {
+    await use({ ...extraHTTPHeaders, "X-Test-Token": WORKER_TOKEN });
+  },
+
+  /** Disable CSS animations and transitions. */
+  page: async ({ page }, use) => {
     // Disable CSS animations and transitions
     await page.addInitScript(() => {
       const css = [
@@ -292,14 +300,6 @@ export const test = base.extend<PilcrowFixtures>({
       }
     });
 
-    const backendOrigin = baseURL ?? "https://pilcrow.lndo.site";
-    await page.route(`${backendOrigin}/**`, async (route) => {
-      const headers = {
-        ...route.request().headers(),
-        "x-test-token": WORKER_TOKEN,
-      };
-      await route.continue({ headers });
-    });
     await use(page);
   },
 });

@@ -14,9 +14,8 @@ class SeedSubmission
     /**
      * Create a test submission with the specified status and role assignments.
      *
-     * The submission is created with change tracking active (via the
-     * X-Test-Token header), so it will be rolled back automatically
-     * after the test completes.
+     * Sent with an X-Test-Token header, the submission is written to that
+     * worker's shadow tables and disappears when they are next rebuilt.
      *
      * @param mixed  $_  unused root value
      * @param array<string, mixed>  $args
