@@ -2,13 +2,12 @@
   "$schema": "https://raw.githubusercontent.com/fallow-rs/fallow/main/config-schema.json",
   // Referenced via codegen config + quasar.config.ts configOverrideOnBuild
   "entry": ["src/graphql/schema.graphql"],
-  // axe-core only imported from cypress specs; the eslint parsers are
-  // runtime requirements of @intlify/eslint-plugin-vue-i18n. "src" is not a
+  // The eslint parsers are runtime requirements of
+  // @intlify/eslint-plugin-vue-i18n. "src" is not a
   // package: the graphql-codegen output under src/graphql/generated/ is
   // gitignored, so fallow never indexes it and misreads those alias imports
   // as a bare "src" dependency
   "ignoreDependencies": [
-    "axe-core",
     "jsonc-eslint-parser",
     "yaml-eslint-parser",
     "src"

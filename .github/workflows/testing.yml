@@ -30,7 +30,6 @@ jobs:
       php: ${{ steps.filter.outputs.php }}
       js: ${{ steps.filter.outputs.js }}
       client: ${{ steps.filter.outputs.client }}
-      cypress: ${{ steps.filter.outputs.cypress }}
       playwright: ${{ steps.filter.outputs.playwright }}
       api: ${{ steps.filter.outputs.api }}
       md: ${{ steps.filter.outputs.md }}
@@ -49,9 +48,6 @@ jobs:
               - '**/*.php'
             client:
               - 'client/**'
-              - '!**/*.md'
-            cypress:
-              - 'cypress/**'
               - '!**/*.md'
             playwright:
               - 'playwright/**'
@@ -272,13 +268,6 @@ jobs:
         with:
           header: patch-coverage-backend
           path: patch-coverage-backend.trimmed.md
-  # e2e:
-  #   name: "E2E Test"
-  #   needs: [build-images]
-  #   uses: ./.github/workflows/do-test-e2e.yml
-  #   secrets: inherit
-  #   with:
-  #     version: ${{ needs.build-images.outputs.version }}
   e2e-playwright:
     name: "E2E Test (Playwright)"
     needs: [build-images]
@@ -314,23 +303,6 @@ jobs:
       - uses: mesh-research/github-actions/build-image@v2
         with:
           target: "web-lint-ci"
-  lint-cypress:
-    name: Cypress Lint
-    runs-on: ubuntu-24.04
-    needs: [changes]
-    if: ${{ needs.changes.outputs.cypress == 'true' }}
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: yarn
-          cache-dependency-path: cypress/yarn.lock
-      - name: Install dependencies
-        run: cd cypress && yarn install
-      - name: Lint
-        run: cd cypress && yarn lint
   docs-build:
     name: Docs Build
     runs-on: ubuntu-24.04

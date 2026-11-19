@@ -10,7 +10,7 @@
         "yesno": "^0.4.0"
     },
     "scripts": {
-        "test": "cd backend && lando artisan test && cd ../client && lando yarn test:unit --run && cd ../cypress && lando cypress install && lando cypress run",
+        "test": "cd backend && lando artisan test && cd ../client && lando yarn test:unit --run && lando playwright-test-chromium",
         "lint:md": "markdownlint '.*/**/*.md' '**/*.md' -p .gitignore"
     },
     "type": "module",

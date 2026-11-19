@@ -74,9 +74,9 @@ lando yarn test:unit:ui
 
 ### Integration Tests (E2E)
 
-We are migrating our end-to-end tests from Cypress to [Playwright](https://playwright.dev/).
-Playwright is the preferred runner for new tests; the Cypress section below is
-retained while the migration is in progress.
+We use [Playwright](https://playwright.dev/) for our integration or end-to-end
+testing. Playwright drives a real browser against a running instance of the
+application and checks its responses programmatically.
 
 #### Playwright
 
@@ -176,61 +176,6 @@ The Playwright suite uses per-worker shadow tables (see
 `backend/app/IntegrationTesting/TableSnapshot.php`) so workers can run in
 parallel without database conflicts. Each test gets a fresh copy of the
 seeded data via the `resetDatabase` fixture.
-
-#### Cypress (legacy)
-
-We use [Cypress](https://www.cypress.io/) for our integration or end-to-end testing.  Cypress runs integration tests in a browser (Chrome, Firefox, Electron, or Edge) and allows controlling the browser and testing the responses of the application programmatically.
-
-::: tip
-These instructions focus on installing Cypress under Lando.  Cypress can bit a bit of a resource hog and, as such, might be better run directly in your host environment.
-
-Also you can use Lando Extras to set up this configuration for you.  Run: `lando extras enable cypress`
-:::
-
-Add the following configuration to your `.lando.local.yml`.
-
-::: warning Heads Up
-NOTE: If you already have configuration in `.lando.local.yml`, be sure to merge the services and tooling keys, or Lando will fail to start/rebuild.
-:::
-
-```yaml
-#FILE: .lando.local.yml
-services:
-  cypress:
-    type: node:22
-    overrides:
-      image: "cypress/base:22.20.0"
-      environment:
-        ELECTRON_EXTRA_LAUNCH_ARGS: "--force-prefers-reduced-motion"
-    build:
-      - cd /app/cypress && yarn
-tooling:
-  cypress:
-    service: cypress
-    dir: /app/cypress
-    cmd: yarn cypress
-```
-
-Rebuild your containers and install cypress binaries:
-```sh
-lando rebuild -y
-lando cypress install
-```
-
-After rebuilding your containers, you can run the headless tests with the command:
-
-```sh
-lando cypress run
-```
-
-::: tip Interactive Test Runner
-It is possible to run the interactive test runner, although it does require some configuration.  The following links are useful resources for this:
-- [Cypress Docker Blog Post](https://www.cypress.io/blog/2019/05/02/run-cypress-with-a-single-docker-command/)
-- [Running GUI Applications in WSL2](https://dev.to/nickymeuleman/using-graphical-user-interfaces-like-cypress-in-wsl2-249j
-)
-:::
-
-The [Cypress Docs](https://docs.cypress.io/guides/getting-started/writing-your-first-test.html#Add-a-test-file) are a thorough resource for writing tests using Cypress.
 
 ## Code Style & Linting
 
