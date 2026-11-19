@@ -183,6 +183,42 @@ The mutations that drive this (`resetDatabase`, `setupTestToken`,
 `teardownTestToken`, `seedSubmission`) only exist when `APP_ENV` is `local` or
 `testing`.
 
+##### What this requires of backend code
+
+Routing works by changing the table prefix on the database connection for the
+length of one request. Laravel applies that prefix for you whenever it builds
+the SQL: Eloquent models, `DB::table()`, and the schema builder are all safe.
+
+SQL you write by hand is not prefixed. A table named literally in a raw
+statement always refers to the shared, unprefixed table:
+
+```php
+// Reaches the shared table, whichever worker asked.
+DB::select('select * from users where email = ?', [$email]);
+$query->whereRaw('submissions.status = ?', [$status]);
+
+// Follows the worker's prefix.
+User::where('email', $email)->get();
+DB::table('users')->where('email', $email)->get();
+$query->where('submissions.status', $status);
+```
+
+Nothing fails when this goes wrong in production, where there is no prefix.
+In the test suite one worker starts reading or changing rows that belong to
+another, and tests fail now and then, only when run in parallel, in a spec
+unrelated to the change. That is hard to trace back, so:
+
+- Prefer Eloquent or the query builder over raw SQL.
+- If raw SQL is unavoidable, build table names with `DB::getTablePrefix()`
+  rather than writing them out.
+- Raw fragments that name no table (`whereRaw('1 = 0')`, expressions over
+  column aliases) are fine.
+
+The same applies to anything else that stores state in the database outside
+the default connection. A second connection, or the `database` driver for
+sessions, cache or queues, would not follow the worker's prefix. Locally and in
+CI those use the `file` and `sync` drivers.
+
 #### Writing tests
 
 Import `test` and `expect` from `@fixtures/base`, not from `@playwright/test`.

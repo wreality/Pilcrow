@@ -17,6 +17,9 @@ class IntegrationTestingMiddleware
     /**
      * If the request has an X-Test-Token header, switch the DB connection
      * to use this worker's prefixed shadow tables.
+     *
+     * Only SQL built by Eloquent or the query builder follows the prefix;
+     * see the note on App\IntegrationTesting\TableSnapshot.
      */
     public function handle(Request $request, Closure $next): Response
     {

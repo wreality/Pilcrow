@@ -16,6 +16,13 @@ use Illuminate\Support\Facades\Log;
  * that worker hit the shadow tables, leaving originals untouched.
  *
  * Rollback = drop shadows + re-copy from originals.
+ *
+ * This rests on one assumption: application SQL is built by Eloquent or the
+ * query builder, which apply the connection's table prefix. Raw SQL that
+ * names a table literally bypasses the prefix and reaches the shared tables,
+ * so workers would see each other's data. The same goes for a second
+ * connection or database-backed sessions, cache or queues. See "Test
+ * isolation" in docs/developers/testing.md.
  */
 class TableSnapshot
 {
