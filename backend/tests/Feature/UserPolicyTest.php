@@ -90,6 +90,43 @@ class UserPolicyTest extends TestCase
         $this->assertFalse($reviewer->can('viewEmail', $coAuthor));
     }
 
+    public function testViewEmailAllowsReviewCoordinatorForReviewTeamMembers(): void
+    {
+        $publication = Publication::factory()->create();
+        $coordinator = User::factory()->create();
+        $reviewer = User::factory()->create();
+        $fellowCoordinator = User::factory()->create();
+
+        Submission::factory()
+            ->for($publication)
+            ->hasAttached($coordinator, [], 'reviewCoordinators')
+            ->hasAttached($fellowCoordinator, [], 'reviewCoordinators')
+            ->hasAttached($reviewer, [], 'reviewers')
+            ->create();
+
+        $this->assertTrue($coordinator->can('viewEmail', $reviewer));
+        $this->assertTrue($coordinator->can('viewEmail', $fellowCoordinator));
+    }
+
+    public function testViewEmailDeniesReviewCoordinatorForReviewerOfOtherSubmission(): void
+    {
+        $publication = Publication::factory()->create();
+        $coordinator = User::factory()->create();
+        $reviewer = User::factory()->create();
+
+        Submission::factory()
+            ->for($publication)
+            ->hasAttached($coordinator, [], 'reviewCoordinators')
+            ->create();
+
+        Submission::factory()
+            ->for($publication)
+            ->hasAttached($reviewer, [], 'reviewers')
+            ->create();
+
+        $this->assertFalse($coordinator->can('viewEmail', $reviewer));
+    }
+
     public function testViewEmailDeniesReviewCoordinator(): void
     {
         $publication = Publication::factory()->create();
@@ -103,6 +140,99 @@ class UserPolicyTest extends TestCase
             ->create();
 
         $this->assertFalse($coordinator->can('viewEmail', $other));
+    }
+
+    public function testViewEmailDeniesReviewerForFellowReviewTeamMembers(): void
+    {
+        $publication = Publication::factory()->create();
+        $reviewer = User::factory()->create();
+        $fellowReviewer = User::factory()->create();
+        $coordinator = User::factory()->create();
+
+        Submission::factory()
+            ->for($publication)
+            ->hasAttached($reviewer, [], 'reviewers')
+            ->hasAttached($fellowReviewer, [], 'reviewers')
+            ->hasAttached($coordinator, [], 'reviewCoordinators')
+            ->create();
+
+        $this->assertFalse($reviewer->can('viewEmail', $fellowReviewer));
+        $this->assertFalse($reviewer->can('viewEmail', $coordinator));
+    }
+
+    public function testViewEmailDeniesReviewCoordinatorForSubmitterWhoReviewsElsewhere(): void
+    {
+        // The target submits to the coordinated submission and reviews a
+        // different one. The role and the submission must match on the same
+        // assignment, so this stays redacted.
+        $publication = Publication::factory()->create();
+        $coordinator = User::factory()->create();
+        $target = User::factory()->create();
+
+        Submission::factory()
+            ->for($publication)
+            ->hasAttached($coordinator, [], 'reviewCoordinators')
+            ->hasAttached($target, [], 'submitters')
+            ->create();
+
+        Submission::factory()
+            ->for($publication)
+            ->hasAttached($target, [], 'reviewers')
+            ->create();
+
+        $this->assertFalse($coordinator->can('viewEmail', $target));
+    }
+
+    public function testViewEmailDeniesFormerReviewCoordinator(): void
+    {
+        $publication = Publication::factory()->create();
+        $coordinator = User::factory()->create();
+        $reviewer = User::factory()->create();
+
+        $submission = Submission::factory()
+            ->for($publication)
+            ->hasAttached($coordinator, [], 'reviewCoordinators')
+            ->hasAttached($reviewer, [], 'reviewers')
+            ->create();
+
+        $this->assertTrue($coordinator->can('viewEmail', $reviewer));
+
+        $submission->reviewCoordinators()->detach($coordinator->id);
+
+        // The coordinated-submission lookup is memoized per viewer instance,
+        // so a fresh instance (a new request) sees the removal.
+        $this->assertFalse($coordinator->fresh()->can('viewEmail', $reviewer));
+    }
+
+    public function testViewEmailMemoizesViewerCoordinatedSubmissionLookup(): void
+    {
+        $publication = Publication::factory()->create();
+        $coordinator = User::factory()->create();
+        $reviewers = User::factory()->count(5)->create();
+
+        $factory = Submission::factory()
+            ->for($publication)
+            ->hasAttached($coordinator, [], 'reviewCoordinators');
+        foreach ($reviewers as $reviewer) {
+            $factory = $factory->hasAttached($reviewer, [], 'reviewers');
+        }
+        $factory->create();
+
+        $coordinator->isApplicationAdministrator();
+
+        DB::enableQueryLog();
+        foreach ($reviewers as $reviewer) {
+            $this->assertTrue($coordinator->can('viewEmail', $reviewer));
+        }
+        $queries = collect(DB::getQueryLog())->pluck('query');
+        DB::disableQueryLog();
+
+        // The viewer's coordinated-submission lookup is the only query that
+        // plucks submission ids; it runs once across all five checks.
+        $viewerSubmissionLookups = $queries->filter(
+            fn(string $sql) => str_starts_with($sql, 'select `submissions`.`id`')
+        );
+        $this->assertCount(1, $viewerSubmissionLookups);
     }
 
     public function testViewEmailDeniesEditorOfDifferentPublication(): void
