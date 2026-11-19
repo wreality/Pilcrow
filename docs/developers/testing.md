@@ -78,8 +78,6 @@ We use [Playwright](https://playwright.dev/) for our integration or end-to-end
 testing. Playwright drives a real browser against a running instance of the
 application and checks its responses programmatically.
 
-#### Playwright
-
 Playwright runs against three browser engines: Chromium, Firefox, and WebKit.
 The tests live in `/playwright` and target the Lando-hosted application
 under `https://pilcrow.lndo.site` by default.
@@ -89,7 +87,7 @@ system's Node and the Playwright browsers installed locally), or **inside
 Lando** via a dedicated container that ships with all three browsers and
 their system dependencies preinstalled.
 
-##### Under Lando (recommended)
+#### Under Lando (recommended)
 
 The Lando path is the easiest way to get going — no host Node version
 wrangling, no `playwright install --with-deps` sudo dance, and the browsers
@@ -136,7 +134,7 @@ Both `yarn test:headed` and `yarn test:ui` need a display, so neither
 works inside the Lando container. Use the host path for those.
 :::
 
-##### Directly on the host
+#### Directly on the host
 
 Install the Playwright browsers (one-time setup):
 
@@ -170,12 +168,48 @@ native UI can't render):
 yarn test:ui
 ```
 
-##### Test isolation
+#### Test isolation
 
-The Playwright suite uses per-worker shadow tables (see
-`backend/app/IntegrationTesting/TableSnapshot.php`) so workers can run in
-parallel without database conflicts. Each test gets a fresh copy of the
-seeded data via the `resetDatabase` fixture.
+The suite runs several workers in parallel against one database. To keep them
+from interfering, each worker gets its own shadow copy of every table (see
+`backend/app/IntegrationTesting/TableSnapshot.php`), and every request the
+worker makes is routed to that copy by an `X-Test-Token` header.
+
+The shadow copy is rebuilt from the seeded data before every test. This happens
+automatically; a test does not need to ask for it. A test can therefore change
+any data it likes without cleaning up afterwards.
+
+The mutations that drive this (`resetDatabase`, `setupTestToken`,
+`teardownTestToken`, `seedSubmission`) only exist when `APP_ENV` is `local` or
+`testing`.
+
+#### Writing tests
+
+Import `test` and `expect` from `@fixtures/base`, not from `@playwright/test`.
+The base fixtures add:
+
+- `loginAs(email, path)`: log in as a seeded user through the API and open
+  `path`. Pass `{ noCache: true }` if the test logs out or changes the
+  password, so the session is not reused by a later test.
+- `seedSubmission(options)`: create a submission in a given status and get its
+  id back. Prefer this over relying on a seeded submission's id.
+
+A few conventions keep the suite reliable:
+
+- Select elements with `page.getByTestId()`, which reads the `data-cy`
+  attribute.
+- Never wait for a fixed time. To wait for a request, call
+  `waitForGQLOperation()` (from `@helpers/graphql`) **before** the action that
+  sends the request, and `await` the result after it.
+- Check accessibility with `checkA11y(page)` (from `@helpers/a11y`) once the
+  page has finished loading, and again after it changes state.
+
+#### In CI
+
+The suite runs on every pull request that touches the client, the backend or
+the tests, against the built Docker images and in Chromium only. When a test
+fails, the run's `playwright-html-report` artifact contains a trace and a
+screenshot for it.
 
 ## Code Style & Linting
 

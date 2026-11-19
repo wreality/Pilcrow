@@ -45,21 +45,15 @@ The automated testing tools for the application generate two screenshots of each
 | :-----------------------------------: | :-----------------------------: |
 | Translated Page                       | Translation Keys for Page       |
 
-You can download a zip file of these screenshots inside a [recent passing run of the integration test suite](https://github.com/MESH-Research/Pilcrow/actions/workflows/do-test-e2e.yml). Any workflow run with a green checkmark will do.
+You can download a zip file of these screenshots from a [recent passing run of the test suite](https://github.com/MESH-Research/Pilcrow/actions/workflows/testing.yml). Any workflow run with a green checkmark will do.
 
 <img alt="Screenshot of a green checkmark on GitHub" src="./images/checkmarks.png">
 
-Click on the title of a recent workflow run and look for the `screenshots` artifact at the bottom of the page.
+Click on the title of a recent workflow run and look for the artifacts whose names start with `screenshots` at the bottom of the page.
 
 <img alt="Screenshot of the artifact labeled screenshots on GitHub appearing within the Artifacts section at the bottom of the page" src="./images/screenshots_artifact.png" style="width:400px">
 
-Note: Screenshots are only saved for 14 days.
-
-Screenshots are also viewable on Pilcrow's [cypress.io](https://dashboard.cypress.io/projects/omnycq/runs) profile. Click on a recent run and locate the "Copywriting Screenshots > Makes Screenshots" spec.
-
-<img alt="Screenshot of the Test Results section on Cypress showing the Copywriting Screenshots spec" src="./images/cypress_test_results.png" style="width:400px">
-
-Click on that spec and you should find a button for screenshots in the flyout that opens.
+Note: Screenshots are only saved for 14 days, and only runs that changed the application include them.
 
 ### In-Browser Keys
 
