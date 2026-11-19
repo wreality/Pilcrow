@@ -29,6 +29,7 @@ input ChangeSubmissionStatusInput {
 }
 
 interface Comment {
+  abilities: [CommentAbility!]!
   content: String!
   created_at: DateTimeUtc!
   created_by: User!
@@ -37,6 +38,20 @@ interface Comment {
   read_at: DateTimeUtc
   updated_at: DateTimeUtc!
   updated_by: User!
+}
+
+"""
+An ability on a single comment. The viewer's `abilities` array carries the
+granted ones; grants depend on authorship and the owning submission's status.
+"""
+enum CommentAbility {
+  """Viewer may delete this comment."""
+  delete
+
+  """
+  Viewer may edit this comment — content and, for a top-level inline comment, style criteria and range.
+  """
+  update
 }
 
 """The type of comments to find participants for"""
@@ -59,27 +74,12 @@ input CreateInlineCommentArgs {
   to: Int
 }
 
-input CreateInlineCommentInput {
-  content: String!
-  from: Int
-  parent_id: ID
-  reply_to_id: ID
-  style_criteria: [ID!]
-  to: Int
-}
-
 """Add an overall comment (or reply); coherence validated as for inline."""
 input CreateOverallCommentArgs {
   content: String!
   parent_id: ID
   reply_to_id: ID
   submission_id: ID!
-}
-
-input CreateOverallCommentInput {
-  content: String!
-  parent_id: ID
-  reply_to_id: ID
 }
 
 input CreatePublicationInput {
@@ -178,6 +178,7 @@ type IdentityProvider {
 
 """An inline comment of a submission"""
 type InlineComment implements Comment {
+  abilities: [CommentAbility!]!
   content: String!
   created_at: DateTimeUtc!
   created_by: User!
@@ -197,13 +198,9 @@ type InlineComment implements Comment {
   updated_by: User!
 }
 
-input InlineCommentHasManyInput {
-  create: [CreateInlineCommentInput!]
-  update: [UpdateInlineCommentInput!]
-}
-
 """A reply to an inline comment of a submission"""
 type InlineCommentReply implements Comment {
+  abilities: [CommentAbility!]!
   content: String!
   created_at: DateTimeUtc!
   created_by: User!
@@ -249,8 +246,8 @@ type Mutation {
 
   """
   Change a submission's editorial status, together with its status-change
-  comment (the comment is gated by the same ability — closing the ungated
-  status_change_comment field of the god-mutation).
+  comment. The comment is only ever set alongside a status change, under the
+  same ability.
   """
   changeSubmissionStatus(input: ChangeSubmissionStatusInput!): Submission!
 
@@ -392,20 +389,6 @@ type Mutation {
   updatePublication(publication: UpdatePublicationInput!): Publication
 
   """
-  Update an existing submission.
-  
-  DEPRECATED: this catch-all god-mutation is being dissolved into intent-shaped
-  mutations (updateSubmissionContent now also edits the title, submitSubmission,
-  changeSubmissionStatus, updateSubmissionSubmitters / Reviewers /
-  ReviewCoordinators, createInlineComment, createOverallComment,
-  updateInlineComment, updateOverallComment). It stays
-  callable while clients migrate; its umbrella now gates on the bridge
-  `legacyUpdate` ability (the prior broad `update`) and each input field is
-  still authorized per-field by @argPolicy. Remove once no client calls it.
-  """
-  updateSubmission(input: UpdateSubmissionInput!): Submission! @deprecated(reason: "Use the intent-shaped submission mutations.")
-
-  """
   Update the work itself — the submission's body and/or its title. Both are the
   author's content under the one `update` ability (author-only, draft-only), so
   they share a mutation; supply either or both.
@@ -513,6 +496,7 @@ enum OrderByRelationWithColumnAggregateFunction {
 
 """An overall comment of a submission"""
 type OverallComment implements Comment {
+  abilities: [CommentAbility!]!
   content: String!
   created_at: DateTimeUtc!
   created_by: User!
@@ -529,13 +513,9 @@ type OverallComment implements Comment {
   updated_by: User!
 }
 
-input OverallCommentHasManyInput {
-  create: [CreateOverallCommentInput!]
-  update: [UpdateOverallCommentInput!]
-}
-
 """A reply to an overall comment of a submission"""
 type OverallCommentReply implements Comment {
+  abilities: [CommentAbility!]!
   content: String!
   created_at: DateTimeUtc!
   created_by: User!
@@ -622,9 +602,9 @@ input ProviderUserInput {
 """A publication that has users, reviews, and submissions"""
 type Publication {
   """
-  The authenticated viewer's scoped abilities on this publication (UI hints; server still enforces).
+  The authenticated viewer's granted scoped abilities on this publication (UI hints; server still enforces).
   """
-  abilities: PublicationAbilities!
+  abilities: [PublicationAbility!]!
   created_at: DateTimeUtc
   editors: [User!]!
   effective_role: PublicationRole
@@ -642,12 +622,15 @@ type Publication {
 }
 
 """
-The authenticated viewer's scoped abilities on a publication. Each flag mirrors a
-PublicationAbility case, resolved through the same engine as the policies.
+An ability on a single publication. The viewer's `abilities` array carries the
+granted ones.
 """
-type PublicationAbilities {
-  update: Boolean!
-  view: Boolean!
+enum PublicationAbility {
+  """Viewer may edit this publication's settings, users, and content."""
+  update
+
+  """Viewer may read this publication."""
+  view
 }
 
 type PublicationAssignment {
@@ -843,9 +826,9 @@ type StyleCriteria {
 """A Submission"""
 type Submission {
   """
-  The authenticated viewer's scoped abilities on this submission (UI hints; server still enforces).
+  The authenticated viewer's granted scoped abilities on this submission (UI hints; server still enforces).
   """
-  abilities: SubmissionAbilities!
+  abilities: [SubmissionAbility!]!
   assignments: [SubmissionAssignment!]!
   audits: [SubmissionAudit]
   commenters(type: CommentParticipantType): [User!]!
@@ -882,20 +865,33 @@ type Submission {
 }
 
 """
-The authenticated viewer's scoped abilities on a submission. Each flag mirrors a
-SubmissionAbility case, resolved through the same engine as the policies — so
-conditional grants (e.g. draft-only status changes) are reflected correctly.
+An ability on a single submission. The viewer's `abilities` array carries the
+granted ones; grants can depend on the submission's current status.
 """
-type SubmissionAbilities {
-  legacy_update: Boolean!
-  review: Boolean!
-  submit: Boolean!
-  update_content: Boolean!
-  update_review_coordinators: Boolean!
-  update_reviewers: Boolean!
-  update_status: Boolean!
-  update_submitters: Boolean!
-  view: Boolean!
+enum SubmissionAbility {
+  """Viewer may access the manuscript and post comments."""
+  review
+
+  """Viewer may send this submission in for review."""
+  submit
+
+  """Viewer may edit the manuscript — body, file, and title."""
+  update_content
+
+  """Viewer may assign or unassign review coordinators."""
+  update_review_coordinators
+
+  """Viewer may assign or unassign reviewers."""
+  update_reviewers
+
+  """Viewer may change this submission's status."""
+  update_status
+
+  """Viewer may add or remove submitters."""
+  update_submitters
+
+  """Viewer may read this submission."""
+  view
 }
 
 """A user associated with a submission and a role"""
@@ -1028,24 +1024,11 @@ input UpdateInlineCommentArgs {
   to: Int
 }
 
-input UpdateInlineCommentInput {
-  content: String
-  from: Int
-  id: ID!
-  style_criteria: [ID!]
-  to: Int
-}
-
 """Edit an overall comment (or reply). Only the supplied content changes."""
 input UpdateOverallCommentArgs {
   comment_id: ID!
   content: String
   submission_id: ID!
-}
-
-input UpdateOverallCommentInput {
-  content: String
-  id: ID!
 }
 
 """Input type for adding profile metadata for a user"""
@@ -1115,18 +1098,6 @@ input UpdateSubmissionContent {
   title: String
 }
 
-input UpdateSubmissionInput {
-  id: ID!
-  inline_comments: InlineCommentHasManyInput
-  overall_comments: OverallCommentHasManyInput
-  review_coordinators: UpdateSubmissionUserInput
-  reviewers: UpdateSubmissionUserInput
-  status: SubmissionStatus
-  status_change_comment: String
-  submitters: UpdateSubmissionUserInput
-  title: String
-}
-
 input UpdateSubmissionReviewCoordinatorsInput {
   id: ID!
   review_coordinators: UpdateSubmissionUserInput
@@ -1178,7 +1149,7 @@ type User {
   """
   This user's global abilities. Fetched via currentUser this is the viewer's own (UI hints; server still enforces).
   """
-  abilities: UserAbilities!
+  abilities: [UserAbility!]!
   avatar_color: String! @deprecated(reason: "Temporary placeholder for stable avatar colors; will be removed when user-uploaded avatars are introduced.")
 
   """Whether the user has access to private beta features (admin-set)."""
@@ -1231,23 +1202,27 @@ type User {
 }
 
 """
-A user's global (application-wide) abilities. Each generated flag mirrors a
-GlobalAbility case, resolved directly against Bouncer — the same engine as the
-policies.
+An application-wide ability. The viewer's `abilities` array carries the
+granted ones.
 """
-type UserAbilities {
-  """
-  Derived: true when the viewer holds ANY `admin_*` ability — i.e. may reach
-  the admin area. Computed server-side as the union of the admin capabilities,
-  so the client gates on one flag and a new `admin_*` ability extends admin
-  access automatically. Not itself a GlobalAbility case.
-  """
-  admin_area: Boolean!
-  admin_user_manage_beta: Boolean!
-  admin_user_update: Boolean!
-  admin_user_view: Boolean!
-  admin_user_view_any: Boolean!
-  publication_create: Boolean!
+enum UserAbility {
+  """Viewer may reach the admin area."""
+  admin_area
+
+  """Viewer may manage beta access and feature opt-ins for users."""
+  admin_user_manage_beta
+
+  """Viewer may edit users in the admin area."""
+  admin_user_update
+
+  """Viewer may see an individual user's admin detail page."""
+  admin_user_view
+
+  """Viewer may browse the admin user list."""
+  admin_user_view_any
+
+  """Viewer may create a publication."""
+  publication_create
 }
 
 """A paginated list of User items."""
