@@ -294,13 +294,6 @@ test("review coordinator: status management", async ({
     status: "RESUBMISSION_REQUESTED",
   });
   const subAccepted = await seedSubmission({ status: "ACCEPTED_AS_FINAL" });
-  const subAcceptedToDelete = await seedSubmission({
-    status: "ACCEPTED_AS_FINAL",
-  });
-  const subDraft = await seedSubmission({
-    status: "DRAFT",
-    withContent: false,
-  });
 
   await test.step("reviewer cannot change submission status", async () => {
     await loginAs("reviewer@meshresearch.net", `/submission/${subInitial}/review`);
@@ -413,32 +406,43 @@ test("review coordinator: status management", async ({
     );
     await expect(page.getByTestId("status-dropdown")).toHaveCount(0);
   });
+});
 
-  await test.step("delete accepted submission directly", async () => {
-    await page.goto(`/submission/${subAcceptedToDelete}/review`);
-    await expect(page.getByTestId("submission_status")).toContainText(
-      "Accepted as Final",
-    );
-    await page.getByTestId("status-dropdown").click();
-    await page.getByTestId("delete").click();
-    await page
-      .getByTestId("dirtyYesChangeStatus")
-      .waitFor({ state: "visible" });
-    await page.getByTestId("dirtyYesChangeStatus").click();
-    await expect(page.getByTestId("submission_status")).toContainText(
-      "Deleted",
-    );
-    await expect(page.getByTestId("status-dropdown")).toHaveCount(0);
+test("submitter: draft with no content shows explanation", async ({
+  page,
+  seedSubmission,
+  loginAs,
+}) => {
+  const subDraft = await seedSubmission({
+    status: "DRAFT",
+    withContent: false,
   });
+  await loginAs("regularuser@meshresearch.net", `/submission/${subDraft}/review`);
+  await expect(page.getByTestId("explanation")).toBeVisible();
+  await page.getByTestId("draft_btn").click();
+  await expect(page).toHaveURL(new RegExp(`/submission/${subDraft}/draft`));
+});
 
-  await test.step("draft with no content shows explanation", async () => {
-    await loginAs("regularuser@meshresearch.net", `/submission/${subDraft}/review`);
-    await expect(page.getByTestId("explanation")).toBeVisible();
-    await page.getByTestId("draft_btn").click();
-    await expect(page).toHaveURL(
-      new RegExp(`/submission/${subDraft}/draft`),
-    );
-  });
+test("review coordinator: delete an accepted submission directly", async ({
+  page,
+  seedSubmission,
+  loginAs,
+}) => {
+  const subId = await seedSubmission({ status: "ACCEPTED_AS_FINAL" });
+  await loginAs(
+    "reviewcoordinator@meshresearch.net",
+    `/submission/${subId}/review`,
+  );
+
+  await expect(page.getByTestId("submission_status")).toContainText(
+    "Accepted as Final",
+  );
+  await page.getByTestId("status-dropdown").click();
+  await page.getByTestId("delete").click();
+  await page.getByTestId("dirtyYesChangeStatus").waitFor({ state: "visible" });
+  await page.getByTestId("dirtyYesChangeStatus").click();
+  await expect(page.getByTestId("submission_status")).toContainText("Deleted");
+  await expect(page.getByTestId("status-dropdown")).toHaveCount(0);
 });
 
 test("reviewer: footnote scrolling", async ({

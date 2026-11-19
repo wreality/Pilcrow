@@ -68,8 +68,12 @@ async function callTestMutation(
   });
 
   try {
+    // Copying every table is database work, not a UI action, and it slows
+    // down when several workers do it at once. Don't hold it to the
+    // action timeout.
     const response = await apiContext.post("/graphql", {
       data: { query, variables },
+      timeout: 20_000,
     });
     const json = await response.json();
     if (json.errors) {
