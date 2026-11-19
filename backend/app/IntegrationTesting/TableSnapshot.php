@@ -10,7 +10,8 @@ use Illuminate\Support\Facades\Log;
  * Creates per-worker shadow copies of all database tables.
  *
  * Each Playwright worker gets its own set of prefixed tables
- * (e.g., _pw1a2b3c_users) copied from the canonical seeded tables.
+ * (e.g., _pw1a2b3c_users) copied from the canonical seeded tables,
+ * foreign keys included.
  * The middleware sets the DB connection prefix so all queries for
  * that worker hit the shadow tables, leaving originals untouched.
  *
@@ -53,7 +54,7 @@ class TableSnapshot
             try {
                 foreach ($tables as $table) {
                     $shadow = $prefix . $table;
-                    DB::statement("CREATE TABLE `{$shadow}` LIKE `{$table}`");
+                    DB::statement(static::shadowDefinition($table, $prefix));
                     DB::statement("INSERT INTO `{$shadow}` SELECT * FROM `{$table}`");
                 }
             } finally {
@@ -68,6 +69,38 @@ class TableSnapshot
         } finally {
             DB::selectOne('SELECT RELEASE_LOCK(?)', [$lockName]);
         }
+    }
+
+    /**
+     * Build the CREATE TABLE statement for a shadow copy of a table.
+     *
+     * `CREATE TABLE ... LIKE` drops foreign keys, which would leave cascades
+     * and constraint violations untested. Rewriting the original definition
+     * keeps them, pointed at the shadow copies of the referenced tables.
+     * Constraint names are unique per schema, so they are renamed too.
+     */
+    protected static function shadowDefinition(string $table, string $prefix): string
+    {
+        $row = (array)DB::selectOne("SHOW CREATE TABLE `{$table}`");
+        $definition = (string)($row['Create Table'] ?? '');
+
+        $definition = preg_replace(
+            '/^CREATE TABLE `[^`]+`/',
+            "CREATE TABLE `{$prefix}{$table}`",
+            $definition,
+            1
+        );
+        $definition = preg_replace_callback(
+            '/CONSTRAINT `([^`]+)`/',
+            fn(array $match) => 'CONSTRAINT `' . $prefix . substr(md5($table . '.' . $match[1]), 0, 16) . '`',
+            (string)$definition
+        );
+
+        return (string)preg_replace(
+            '/REFERENCES `([^`]+)`/',
+            "REFERENCES `{$prefix}$1`",
+            (string)$definition
+        );
     }
 
     /**
