@@ -37,24 +37,6 @@ If you need help, [please reach out to the team](https://github.com/MESH-Researc
 
 ## Translation Tools
 
-### Screenshots
-
-The automated testing tools for the application generate two screenshots of each page.  The first displays the page in `en-US` and the second replaces translated text strings with their key names in the translation file to aid in locating the appropriate key to modify for a given text string.
-
-| ![Translated](./images/i18n-copy.png) | ![Keys](./images/i18n-keys.png) |
-| :-----------------------------------: | :-----------------------------: |
-| Translated Page                       | Translation Keys for Page       |
-
-You can download a zip file of these screenshots from a [recent passing run of the test suite](https://github.com/MESH-Research/Pilcrow/actions/workflows/testing.yml). Any workflow run with a green checkmark will do.
-
-<img alt="Screenshot of a green checkmark on GitHub" src="./images/checkmarks.png">
-
-Click on the title of a recent workflow run and look for the artifacts whose names start with `screenshots` at the bottom of the page.
-
-<img alt="Screenshot of the artifact labeled screenshots on GitHub appearing within the Artifacts section at the bottom of the page" src="./images/screenshots_artifact.png" style="width:400px">
-
-Note: Screenshots are only saved for 14 days, and only runs that changed the application include them.
-
 ### In-Browser Keys
 
 If you are able to access/start a build of the application, you can also switch to the translation keys display mode by pressing `Ctrl+Shift+Alt+T`.  Pressing the key combination again will revert back to `en-US`. This setting will not be saved between page loads, but you can invoke the key combination as often as you need.

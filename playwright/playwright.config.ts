@@ -1,8 +1,5 @@
 import { defineConfig, devices } from "@playwright/test";
 
-// Specs that only produce screenshots; one engine's output is enough.
-const SCREENSHOT_SPECS = /copywriting\.spec\.ts/;
-
 export default defineConfig({
   globalSetup: "./tests/global-setup.ts",
   testDir: "./tests/specs",
@@ -35,7 +32,6 @@ export default defineConfig({
     },
     {
       name: "firefox",
-      testIgnore: SCREENSHOT_SPECS,
       use: {
         ...devices["Desktop Firefox"],
         viewport: { width: 1280, height: 720 },
@@ -46,7 +42,6 @@ export default defineConfig({
     },
     {
       name: "webkit",
-      testIgnore: SCREENSHOT_SPECS,
       timeout: 60_000,
       use: {
         ...devices["Desktop Safari"],
