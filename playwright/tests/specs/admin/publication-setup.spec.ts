@@ -46,6 +46,9 @@ test("app admin: user management", async ({ page, loginAs }) => {
     await expect(adminsList.locator(".q-list")).toContainText(
       "Application Administrator",
     );
+    // The user search dropdown closes a moment after the assignment; axe
+    // would otherwise catch it half-closed as an empty listbox.
+    await expect(page.locator(".q-menu")).toHaveCount(0);
     await checkA11y(page);
 
     gqlPromise = waitForGQLOperation(page, "UpdatePublicationAdmins");
@@ -65,6 +68,9 @@ test("app admin: user management", async ({ page, loginAs }) => {
     await expect(editorsList.locator(".q-list")).toContainText(
       "Application Administrator",
     );
+    // The user search dropdown closes a moment after the assignment; axe
+    // would otherwise catch it half-closed as an empty listbox.
+    await expect(page.locator(".q-menu")).toHaveCount(0);
     await checkA11y(page);
 
     gqlPromise = waitForGQLOperation(page, "UpdatePublicationEditors");
