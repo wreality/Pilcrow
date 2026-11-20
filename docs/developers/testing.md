@@ -101,7 +101,7 @@ lando rebuild -y
 ```
 
 This adds a `playwright` service based on
-`mcr.microsoft.com/playwright:v1.58.2-noble` and wires up tooling commands.
+`mcr.microsoft.com/playwright:v1.65.1-noble` and wires up tooling commands.
 On first rebuild, Lando runs `yarn install` inside the container.
 
 Then run the suite from anywhere in the project:
