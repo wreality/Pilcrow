@@ -81,7 +81,7 @@ test("regular user: draft preview and submission", async ({
   await test.step("submit for review", async () => {
     await page.goto("/submission/111/draft");
     await page.getByTestId("submit_for_review_btn").click();
-    const gqlPromise = waitForGQLOperation(page, "UpdateSubmissionStatus");
+    const gqlPromise = waitForGQLOperation(page, "SubmitSubmission");
     await page.getByTestId("dirtyYesChangeStatus").click();
     await gqlPromise;
   });
