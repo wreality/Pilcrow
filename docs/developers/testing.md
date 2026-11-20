@@ -102,8 +102,7 @@ lando rebuild -y
 
 This adds a `playwright` service based on
 `mcr.microsoft.com/playwright:v1.58.2-noble` and wires up tooling commands.
-On first rebuild, Lando runs `yarn install` inside the container, which also
-applies the `patch-package` patches automatically.
+On first rebuild, Lando runs `yarn install` inside the container.
 
 Then run the suite from anywhere in the project:
 
@@ -167,6 +166,12 @@ native UI can't render):
 ```sh
 yarn test:ui
 ```
+
+::: tip Debugging on WSL
+Under WSLg the Playwright Inspector window opened by `--debug` can appear but
+not respond to clicks. Use `yarn test:ui` instead, or `page.pause()` together
+with the test runner UI.
+:::
 
 #### Test isolation
 
