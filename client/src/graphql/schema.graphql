@@ -363,8 +363,11 @@ type Mutation {
   """
   setupTestToken(token: String!): String!
 
-  """Send a draft submission in for review."""
-  submitSubmission(submission_id: ID!): Submission!
+  """
+  Send a draft submission in for review, optionally with a status-change
+  comment for the people associated with it.
+  """
+  submitSubmission(status_change_comment: String, submission_id: ID!): Submission!
 
   """
   Drop shadow tables for a worker's test token.
