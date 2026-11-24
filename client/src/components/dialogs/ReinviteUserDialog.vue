@@ -13,7 +13,7 @@
           <p class="q-mb-none">
             {{
               $t(`dialog.reinviteUser.description`, {
-                email: email,
+                user: userLabel,
                 role: $t(`role.${roleGroup}`, 1)
               })
             }}
@@ -81,7 +81,8 @@ const { dialogRef, onDialogHide, onDialogOK, onDialogCancel } =
 
 interface Props {
   roleGroup: string
-  email: string
+  userId: string
+  userLabel: string
   submissionId: string
 }
 
@@ -92,7 +93,7 @@ const comment = ref(null)
 const opts = {
   variables: {
     id: props.submissionId,
-    email: props.email,
+    user_id: props.userId,
     message: null as string | null
   }
 }
@@ -109,13 +110,13 @@ async function reinviteUser() {
   try {
     await mutate({
       id: props.submissionId,
-      email: props.email,
+      user_id: props.userId,
       message: comment.value
     })
     newStatusMessage(
       "success",
       t(`dialog.reinviteUser.success`, {
-        email: props.email,
+        user: props.userLabel,
         role: t(`role.${props.roleGroup}`, 1)
       })
     )
@@ -123,7 +124,7 @@ async function reinviteUser() {
     newStatusMessage(
       "failure",
       t(`dialog.reinviteUser.failure`, {
-        email: props.email
+        user: props.userLabel
       })
     )
   }

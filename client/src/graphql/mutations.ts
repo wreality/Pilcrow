@@ -658,9 +658,9 @@ export const INVITE_REVIEW_COORDINATOR = gql`
 `
 
 export const REINVITE_REVIEWER = gql`
-  mutation ReinviteReviewer($id: ID!, $email: String!, $message: String) {
+  mutation ReinviteReviewer($id: ID!, $user_id: ID!, $message: String) {
     reinviteReviewer(
-      input: { submission_id: $id, email: $email, message: $message }
+      input: { submission_id: $id, user_id: $user_id, message: $message }
     ) {
       id
       reviewers {
@@ -674,11 +674,11 @@ export const REINVITE_REVIEWER = gql`
 export const REINVITE_REVIEW_COORDINATOR = gql`
   mutation ReinviteReviewCoordinator(
     $id: ID!
-    $email: String!
+    $user_id: ID!
     $message: String
   ) {
     reinviteReviewCoordinator(
-      input: { submission_id: $id, email: $email, message: $message }
+      input: { submission_id: $id, user_id: $user_id, message: $message }
     ) {
       id
       review_coordinators {

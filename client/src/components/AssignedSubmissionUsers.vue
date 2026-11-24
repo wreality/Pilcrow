@@ -266,11 +266,8 @@ async function assignUser(selectedUser: FoundUser) {
 }
 
 async function reinviteUser({ user }: { user: userListItemFragment }) {
-  if (!user.email) {
-    return
-  }
   await new Promise((resolve) => {
-    dirtyDialog(user.email as string)
+    dirtyDialog(user)
       .onOk(function () {
         resolve(true)
       })
@@ -282,12 +279,13 @@ async function reinviteUser({ user }: { user: userListItemFragment }) {
     return
   }
 }
-function dirtyDialog(email: string) {
+function dirtyDialog(user: userListItemFragment) {
   return dialog({
     component: ReinviteUserDialog,
     componentProps: {
       roleGroup: props.roleGroup,
-      email,
+      userId: user.id,
+      userLabel: user.name || user.username,
       submissionId: props.container.id
     }
   })

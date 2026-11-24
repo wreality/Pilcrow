@@ -210,10 +210,10 @@ input inviteSubmissionUserInput
     message: String
 }
 
-input reinviteSubmissionUserInput
-    @validator(class: "SubmissionReinvitationValidator") {
+input reinviteSubmissionUserInput {
     submission_id: ID!
-    email: String!
+    "The staged user to reinvite. Must be assigned to the submission in the role being reinvited."
+    user_id: ID!
     message: String
 }
 

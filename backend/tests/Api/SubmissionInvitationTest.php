@@ -6,6 +6,7 @@ namespace Tests\Api;
 use App\Auth\Roles\ScopedRole;
 use App\Models\Submission;
 use App\Models\SubmissionInvitation;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Arr;
@@ -107,49 +108,81 @@ class SubmissionInvitationTest extends ApiTestCase
     }
 
     /**
-     * Re-inviting a reviewer resends the invitation without staging a duplicate
-     * user and records the reviewer role slug + legacy id.
+     * Call a reinvite mutation for the given user.
+     *
+     * @param string $mutation reinviteReviewer or reinviteReviewCoordinator
+     * @param \App\Models\Submission $submission
+     * @param \App\Models\User $user
+     * @return \Illuminate\Testing\TestResponse
+     */
+    private function callReinvite(string $mutation, Submission $submission, User $user): TestResponse
+    {
+        return $this->graphQL(
+            "mutation Reinvite (\$submission_id: ID! \$user_id: ID! \$message: String){
+                {$mutation}(input: {
+                  submission_id: \$submission_id
+                  user_id: \$user_id
+                  message: \$message
+                }) {
+                  id
+                }
+              }
+            ",
+            [
+                'submission_id' => $submission->id,
+                'user_id' => $user->id,
+                'message' => '',
+            ]
+        );
+    }
+
+    /**
+     * Stage a user on the submission in the given role, as an invite does.
+     *
+     * @param \App\Models\Submission $submission
+     * @param \App\Auth\Roles\ScopedRole $role
+     * @param string $email
+     * @return \App\Models\User
+     */
+    private function stageInvitee(Submission $submission, ScopedRole $role, string $email): User
+    {
+        $invitation = SubmissionInvitation::create([
+            'submission_id' => $submission->id,
+            'role' => $role->toSlug(),
+            'email' => $email,
+        ]);
+        $role === ScopedRole::Reviewer
+            ? $invitation->inviteReviewer()
+            : $invitation->inviteReviewCoordinator();
+
+        return User::where('email', $email)->firstOrFail();
+    }
+
+    /**
+     * Re-inviting a reviewer resends the invitation to the staged user's stored
+     * email without staging a duplicate user, and records the reviewer role
+     * slug + legacy id.
      *
      * @return void
      */
     public function testReviewerCanBeReinvited()
     {
-        $valid_email = 'reinvited.reviewer@gmail.com';
+        $email = 'reinvited.reviewer@gmail.com';
         $this->beAppAdmin();
         $submission = Submission::factory()->create();
+        $staged = $this->stageInvitee($submission, ScopedRole::Reviewer, $email);
 
-        // Reinvite resends to an already-staged reviewer, so invite first.
-        SubmissionInvitation::create([
-            'submission_id' => $submission->id,
-            'role' => ScopedRole::Reviewer->toSlug(),
-            'email' => $valid_email,
-        ])->inviteReviewer();
-
-        $response = $this->graphQL(
-            'mutation ReinviteReviewer ($submission_id: ID! $email: String! $message: String){
-                reinviteReviewer(input: {
-                  submission_id: $submission_id
-                  email: $email
-                  message: $message
-                }) {
-                  id
-                }
-              }
-            ',
-            [
-                'submission_id' => $submission->id,
-                'email' => $valid_email,
-                'message' => '',
-            ]
-        );
+        $response = $this->callReinvite('reinviteReviewer', $submission, $staged);
 
         $response->assertJsonPath('data.reinviteReviewer.id', (string)$submission->id);
+        $this->assertSame(2, SubmissionInvitation::where('email', $email)->count());
         $this->assertDatabaseHas('submission_invitations', [
             'submission_id' => $submission->id,
-            'email' => $valid_email,
+            'email' => $email,
             'role' => ScopedRole::Reviewer->toSlug(),
             'role_id' => ScopedRole::Reviewer->legacyId(),
         ]);
+        $this->assertSame(1, User::where('email', $email)->count());
     }
 
     /**
@@ -160,42 +193,133 @@ class SubmissionInvitationTest extends ApiTestCase
      */
     public function testReviewCoordinatorCanBeReinvited()
     {
-        $valid_email = 'reinvited.coordinator@gmail.com';
+        $email = 'reinvited.coordinator@gmail.com';
         $this->beAppAdmin();
         $submission = Submission::factory()->create();
+        $staged = $this->stageInvitee($submission, ScopedRole::ReviewCoordinator, $email);
 
-        // Reinvite resends to an already-staged coordinator, so invite first.
-        SubmissionInvitation::create([
-            'submission_id' => $submission->id,
-            'role' => ScopedRole::ReviewCoordinator->toSlug(),
-            'email' => $valid_email,
-        ])->inviteReviewCoordinator();
-
-        $response = $this->graphQL(
-            'mutation ReinviteReviewCoordinator ($submission_id: ID! $email: String! $message: String){
-                reinviteReviewCoordinator(input: {
-                  submission_id: $submission_id
-                  email: $email
-                  message: $message
-                }) {
-                  id
-                }
-              }
-            ',
-            [
-                'submission_id' => $submission->id,
-                'email' => $valid_email,
-                'message' => '',
-            ]
-        );
+        $response = $this->callReinvite('reinviteReviewCoordinator', $submission, $staged);
 
         $response->assertJsonPath('data.reinviteReviewCoordinator.id', (string)$submission->id);
+        $this->assertSame(2, SubmissionInvitation::where('email', $email)->count());
         $this->assertDatabaseHas('submission_invitations', [
             'submission_id' => $submission->id,
-            'email' => $valid_email,
+            'email' => $email,
             'role' => ScopedRole::ReviewCoordinator->toSlug(),
             'role_id' => ScopedRole::ReviewCoordinator->legacyId(),
         ]);
+    }
+
+    /**
+     * A review coordinator can reinvite a staged reviewer on a submission they
+     * coordinate, without being able to read the reviewer's email.
+     *
+     * @return void
+     */
+    public function testReviewCoordinatorCanReinviteStagedReviewer()
+    {
+        $email = 'coordinator.reinvites@gmail.com';
+        $coordinator = $this->beReviewCoordinator();
+        $submission = $coordinator->submissions()->firstOrFail();
+        $staged = $this->stageInvitee($submission, ScopedRole::Reviewer, $email);
+
+        $this->assertFalse($coordinator->can('viewEmail', $staged));
+
+        $response = $this->callReinvite('reinviteReviewer', $submission, $staged);
+
+        $response->assertJsonPath('data.reinviteReviewer.id', (string)$submission->id);
+        $this->assertSame(2, SubmissionInvitation::where('email', $email)->count());
+    }
+
+    /**
+     * @return array<string, array{0: string}>
+     */
+    public static function reinviteMutationProvider(): array
+    {
+        return [
+            'reviewer' => ['reinviteReviewer'],
+            'review coordinator' => ['reinviteReviewCoordinator'],
+        ];
+    }
+
+    /**
+     * A confirmed (not staged) member of the team cannot be reinvited.
+     *
+     * @param string $mutation
+     * @return void
+     */
+    #[DataProvider('reinviteMutationProvider')]
+    public function testConfirmedUserCannotBeReinvited(string $mutation)
+    {
+        $this->beAppAdmin();
+        $member = User::factory()->create();
+        $relation = $mutation === 'reinviteReviewer' ? 'reviewers' : 'reviewCoordinators';
+        $submission = Submission::factory()
+            ->hasAttached($member, [], $relation)
+            ->create();
+
+        $response = $this->callReinvite($mutation, $submission, $member);
+
+        $response->assertGraphQLErrorMessage('The user is not a pending invitee of this submission in this role.');
+        $this->assertSame(0, SubmissionInvitation::where('email', $member->email)->count());
+    }
+
+    /**
+     * A staged user of a different submission cannot be reinvited through
+     * this one, so a reinvite can't be aimed at an arbitrary account.
+     *
+     * @param string $mutation
+     * @return void
+     */
+    #[DataProvider('reinviteMutationProvider')]
+    public function testStagedUserOfAnotherSubmissionCannotBeReinvited(string $mutation)
+    {
+        $email = 'elsewhere@gmail.com';
+        $this->beAppAdmin();
+        $submission = Submission::factory()->create();
+        $role = $mutation === 'reinviteReviewer' ? ScopedRole::Reviewer : ScopedRole::ReviewCoordinator;
+        $staged = $this->stageInvitee(Submission::factory()->create(), $role, $email);
+
+        $response = $this->callReinvite($mutation, $submission, $staged);
+
+        $response->assertGraphQLErrorMessage('The user is not a pending invitee of this submission in this role.');
+        $this->assertSame(1, SubmissionInvitation::where('email', $email)->count());
+    }
+
+    /**
+     * A staged reviewer cannot be reinvited as a review coordinator, and vice
+     * versa.
+     *
+     * @return void
+     */
+    public function testStagedUserCannotBeReinvitedInAnotherRole()
+    {
+        $this->beAppAdmin();
+        $submission = Submission::factory()->create();
+        $reviewer = $this->stageInvitee($submission, ScopedRole::Reviewer, 'staged.rev@gmail.com');
+        $coordinator = $this->stageInvitee($submission, ScopedRole::ReviewCoordinator, 'staged.coord@gmail.com');
+
+        $this->callReinvite('reinviteReviewCoordinator', $submission, $reviewer)
+            ->assertGraphQLErrorMessage('The user is not a pending invitee of this submission in this role.');
+        $this->callReinvite('reinviteReviewer', $submission, $coordinator)
+            ->assertGraphQLErrorMessage('The user is not a pending invitee of this submission in this role.');
+    }
+
+    /**
+     * A reviewer has no ability to reinvite anyone, even a staged teammate.
+     *
+     * @return void
+     */
+    public function testReviewerCannotReinvite()
+    {
+        $reviewer = $this->beReviewer();
+        $submission = $reviewer->submissions()->firstOrFail();
+        $staged = $this->stageInvitee($submission, ScopedRole::Reviewer, 'teammate@gmail.com');
+
+        $response = $this->callReinvite('reinviteReviewer', $submission, $staged);
+
+        $response->assertGraphQLErrorMessage('UNAUTHORIZED');
+        $this->assertSame(1, SubmissionInvitation::where('email', 'teammate@gmail.com')->count());
     }
 
     /**

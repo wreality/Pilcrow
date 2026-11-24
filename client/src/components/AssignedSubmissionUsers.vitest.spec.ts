@@ -12,6 +12,16 @@ import {
 } from "src/graphql/generated/graphql"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 import AssignedSubmissionUsers from "./AssignedSubmissionUsers.vue"
+import ReinviteUserDialog from "./dialogs/ReinviteUserDialog.vue"
+
+const { dialogMock } = vi.hoisted(() => ({ dialogMock: vi.fn() }))
+vi.mock("quasar", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("quasar")>()
+  return {
+    ...actual,
+    useQuasar: () => ({ ...actual.useQuasar(), dialog: dialogMock })
+  }
+})
 
 installQuasarPlugin({ plugins: { Notify } })
 const mockClient = installApolloClient()
@@ -251,5 +261,41 @@ describe("AssignedSubmissionUsers", () => {
     mock.mockClear()
     await (wrapper.vm as any).handleUserListClick({ user: { id: "2" } })
     expect(mock).toHaveBeenCalledWith({ disconnect: ["2"], id: "1" })
+  })
+  test("reinvite opens the dialog for a staged user whose email is redacted", async () => {
+    const chain = {
+      onOk: vi.fn(() => chain),
+      onCancel: vi.fn(() => chain)
+    }
+    dialogMock.mockReturnValue(chain)
+    const staged = {
+      id: "7",
+      username: "staged.invitee",
+      name: null,
+      email: null,
+      staged: true
+    } as unknown as User
+    const wrapper = makeWrapper({
+      roleGroup: "reviewers",
+      mutable: true,
+      container: {
+        __typename: "Submission",
+        id: "1",
+        effective_role: SubmissionUserRoles.review_coordinator,
+        reviewers: [staged]
+      } as Submission
+    })
+
+    void (wrapper.vm as any).reinviteUser({ user: staged })
+
+    expect(dialogMock).toHaveBeenCalledWith({
+      component: ReinviteUserDialog,
+      componentProps: {
+        roleGroup: "reviewers",
+        userId: "7",
+        userLabel: "staged.invitee",
+        submissionId: "1"
+      }
+    })
   })
 })

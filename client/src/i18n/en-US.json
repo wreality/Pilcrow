@@ -1299,10 +1299,10 @@
     },
     "reinviteUser": {
       "aria_label": "Reinvite User",
-      "description": "You are about to reinvite {email} as a {role} of this submission.",
+      "description": "You are about to reinvite {user} as a {role} of this submission.",
       "optional_message": "Add an optional message with your invitation.",
-      "success": "{email} has been reinvited as a {role}.",
-      "failure": "An error occurred while attempting to reinvite {email}."
+      "success": "{user} has been reinvited as a {role}.",
+      "failure": "An error occurred while attempting to reinvite {user}."
     },
     "confirmStatusChange": {
       "aria_label": "Confirm Status Change",

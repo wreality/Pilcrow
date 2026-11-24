@@ -1247,7 +1247,11 @@ input inviteSubmissionUserInput {
 }
 
 input reinviteSubmissionUserInput {
-  email: String!
   message: String
   submission_id: ID!
+
+  """
+  The staged user to reinvite. Must be assigned to the submission in the role being reinvited.
+  """
+  user_id: ID!
 }
