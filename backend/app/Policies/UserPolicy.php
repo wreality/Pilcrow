@@ -79,10 +79,6 @@ class UserPolicy
      *  - Application administrators
      *  - Publication administrators / editors of any publication the target
      *    belongs to, or that owns a submission the target is assigned to
-     *  - Review coordinators, for members of the review team (reviewers or
-     *    fellow coordinators) on a submission they coordinate — they manage
-     *    that team, including reinviting staged members, which requires the
-     *    member's email. Submitters on those submissions stay redacted.
      */
     public function viewEmail(User $viewer, User $target): bool
     {
@@ -110,45 +106,20 @@ class UserPolicy
         }
         $viewerPublicationIds = $viewer->getRelation('privilegedPublicationIds');
 
-        if ($viewerPublicationIds->isNotEmpty()) {
-            if (
-                $target->publications()
-                    ->whereIn('publications.id', $viewerPublicationIds)
-                    ->exists()
-            ) {
-                return true;
-            }
-
-            if (
-                $target->submissions()
-                    ->whereIn('submissions.publication_id', $viewerPublicationIds)
-                    ->exists()
-            ) {
-                return true;
-            }
-        }
-
-        // Memoized for the same reason as privilegedPublicationIds above.
-        if (!$viewer->relationLoaded('coordinatedSubmissionIds')) {
-            $viewer->setRelation(
-                'coordinatedSubmissionIds',
-                $viewer->submissions()
-                    ->wherePivot('role', ScopedRole::ReviewCoordinator->toSlug())
-                    ->pluck('submissions.id')
-            );
-        }
-        $coordinatedSubmissionIds = $viewer->getRelation('coordinatedSubmissionIds');
-
-        if ($coordinatedSubmissionIds->isEmpty()) {
+        if ($viewerPublicationIds->isEmpty()) {
             return false;
         }
 
+        if (
+            $target->publications()
+                ->whereIn('publications.id', $viewerPublicationIds)
+                ->exists()
+        ) {
+            return true;
+        }
+
         return $target->submissions()
-            ->whereIn('submissions.id', $coordinatedSubmissionIds)
-            ->wherePivotIn('role', [
-                ScopedRole::Reviewer->toSlug(),
-                ScopedRole::ReviewCoordinator->toSlug(),
-            ])
+            ->whereIn('submissions.publication_id', $viewerPublicationIds)
             ->exists();
     }
 }
