@@ -74,54 +74,183 @@ lando yarn test:unit:ui
 
 ### Integration Tests (E2E)
 
-We use [Cypress](https://www.cypress.io/) for our integration or end-to-end testing.  Cypress runs integration tests in a browser (Chrome, Firefox, Electron, or Edge) and allows controlling the browser and testing the responses of the application programmatically.
+We use [Playwright](https://playwright.dev/) for our integration or end-to-end
+testing. Playwright drives a real browser against a running instance of the
+application and checks its responses programmatically.
 
-::: tip
-These instructions focus on installing Cypress under Lando.  Cypress can bit a bit of a resource hog and, as such, might be better run directly in your host environment.
+Playwright runs against three browser engines: Chromium, Firefox, and WebKit.
+The tests live in `/playwright` and target the Lando-hosted application
+under `https://pilcrow.lndo.site` by default.
 
-Also you can use Lando Extras to set up this configuration for you.  Run: `lando extras enable cypress`
-:::
+You can run Playwright two ways: **directly on the host** (using your
+system's Node and the Playwright browsers installed locally), or **inside
+Lando** via a dedicated container that ships with all three browsers and
+their system dependencies preinstalled.
 
-Add the following configuration to your `.lando.local.yml`.
+#### Under Lando (recommended)
 
-::: warning Heads Up
-NOTE: If you already have configuration in `.lando.local.yml`, be sure to merge the services and tooling keys, or Lando will fail to start/rebuild.
-:::
+The Lando path is the easiest way to get going — no host Node version
+wrangling, no `playwright install --with-deps` sudo dance, and the browsers
+are baked into the image. The Lando integration is shipped as a Lando extra.
 
-```yaml
-#FILE: .lando.local.yml
-services:
-  cypress:
-    type: node:14
-    overrides:
-      image: "cypress/base:14"
-tooling:
-  cypress:
-    service: cypress
-    dir: /app/client
-    cmd: cypress
-```
+Enable it and rebuild:
 
-Rebuild your containers and install cypress binaries:
 ```sh
+lando extras enable playwright
 lando rebuild -y
-lando cypress install
 ```
 
-After rebuilding your containers, you can run the headless tests with the command:
+This adds a `playwright` service based on
+`mcr.microsoft.com/playwright:v1.65.1-noble` and wires up tooling commands.
+On first rebuild, Lando runs `yarn install` inside the container.
+
+Then run the suite from anywhere in the project:
 
 ```sh
-lando cypress run
+lando playwright-test            # all browsers
+lando playwright-test-chromium   # chromium only
+lando playwright-test-firefox    # firefox only
+lando playwright-test-webkit     # webkit only
+lando playwright                 # raw `playwright` CLI passthrough
+lando playwright-lint            # ESLint on the suite
+lando playwright-typecheck       # tsc --noEmit
+lando playwright-validate        # lint + typecheck
 ```
 
-::: tip Interactive Test Runner
-It is possible to run the interactive test runner, although it does require some configuration.  The following links are useful resources for this:
-- [Cypress Docker Blog Post](https://www.cypress.io/blog/2019/05/02/run-cypress-with-a-single-docker-command/)
-- [Running GUI Applications in WSL2](https://dev.to/nickymeuleman/using-graphical-user-interfaces-like-cypress-in-wsl2-249j
-)
+::: warning Host node_modules vs. container node_modules
+If you have previously run Playwright directly on the host, your
+`/playwright/node_modules` may contain host-platform binaries that won't
+work inside the Lando container. Delete them before enabling the extra:
+
+```sh
+rm -rf playwright/node_modules
+lando rebuild -y
+```
 :::
 
-The [Cypress Docs](https://docs.cypress.io/guides/getting-started/writing-your-first-test.html#Add-a-test-file) are a thorough resource for writing tests using Cypress.
+::: tip Headed mode + test runner UI
+Both `yarn test:headed` and `yarn test:ui` need a display, so neither
+works inside the Lando container. Use the host path for those.
+:::
+
+#### Directly on the host
+
+Install the Playwright browsers (one-time setup):
+
+```sh
+cd playwright
+yarn install
+npx playwright install
+```
+
+On Linux you may also need system libraries for WebKit:
+
+```sh
+sudo npx playwright install-deps webkit
+```
+
+Then run the suite **from the `/playwright` directory**:
+
+```sh
+yarn test            # all browsers
+yarn test:chromium   # chromium only
+yarn test:firefox    # firefox only
+yarn test:webkit     # webkit only
+yarn test:headed     # show browsers
+yarn test:report     # open the last HTML report
+```
+
+To open the test runner UI in your default browser (handy on WSL where the
+native UI can't render):
+
+```sh
+yarn test:ui
+```
+
+::: tip Debugging on WSL
+Under WSLg the Playwright Inspector window opened by `--debug` can appear but
+not respond to clicks. Use `yarn test:ui` instead, or `page.pause()` together
+with the test runner UI.
+:::
+
+#### Test isolation
+
+The suite runs several workers in parallel against one database. To keep them
+from interfering, each worker gets its own shadow copy of every table (see
+`backend/app/IntegrationTesting/TableSnapshot.php`), and every request the
+worker makes is routed to that copy by an `X-Test-Token` header.
+
+The shadow copy is rebuilt from the seeded data before every test. This happens
+automatically; a test does not need to ask for it. A test can therefore change
+any data it likes without cleaning up afterwards.
+
+The mutations that drive this (`resetDatabase`, `setupTestToken`,
+`teardownTestToken`, `seedSubmission`) only exist when `APP_ENV` is `local` or
+`testing`.
+
+##### What this requires of backend code
+
+Routing works by changing the table prefix on the database connection for the
+length of one request. Laravel applies that prefix for you whenever it builds
+the SQL: Eloquent models, `DB::table()`, and the schema builder are all safe.
+
+SQL you write by hand is not prefixed. A table named literally in a raw
+statement always refers to the shared, unprefixed table:
+
+```php
+// Reaches the shared table, whichever worker asked.
+DB::select('select * from users where email = ?', [$email]);
+$query->whereRaw('submissions.status = ?', [$status]);
+
+// Follows the worker's prefix.
+User::where('email', $email)->get();
+DB::table('users')->where('email', $email)->get();
+$query->where('submissions.status', $status);
+```
+
+Nothing fails when this goes wrong in production, where there is no prefix.
+In the test suite one worker starts reading or changing rows that belong to
+another, and tests fail now and then, only when run in parallel, in a spec
+unrelated to the change. That is hard to trace back, so:
+
+- Prefer Eloquent or the query builder over raw SQL.
+- If raw SQL is unavoidable, build table names with `DB::getTablePrefix()`
+  rather than writing them out.
+- Raw fragments that name no table (`whereRaw('1 = 0')`, expressions over
+  column aliases) are fine.
+
+The same applies to anything else that stores state in the database outside
+the default connection. A second connection, or the `database` driver for
+sessions, cache or queues, would not follow the worker's prefix. Locally and in
+CI those use the `file` and `sync` drivers.
+
+#### Writing tests
+
+Import `test` and `expect` from `@fixtures/base`, not from `@playwright/test`.
+The base fixtures add:
+
+- `loginAs(email, path)`: log in as a seeded user through the API and open
+  `path`. Pass `{ noCache: true }` if the test logs out or changes the
+  password, so the session is not reused by a later test.
+- `seedSubmission(options)`: create a submission in a given status and get its
+  id back. Prefer this over relying on a seeded submission's id.
+
+A few conventions keep the suite reliable:
+
+- Select elements with `page.getByTestId()`, which reads the `data-cy`
+  attribute.
+- Never wait for a fixed time. To wait for a request, call
+  `waitForGQLOperation()` (from `@helpers/graphql`) **before** the action that
+  sends the request, and `await` the result after it.
+- Check accessibility with `checkA11y(page)` (from `@helpers/a11y`) once the
+  page has finished loading, and again after it changes state.
+
+#### In CI
+
+The suite runs on every pull request that touches the client, the backend or
+the tests, against the built Docker images and in Chromium only. When a test
+fails, the run's `playwright-html-report` artifact contains a trace and a
+screenshot for it.
 
 ## Code Style & Linting
 
@@ -157,6 +286,26 @@ From the `/client` directory run:
 lando yarn lint #Check and report linting errors
 
 lando yarn lint --fix #Fix fixable linting errors
+```
+
+### Playwright (TypeScript)
+
+The Playwright suite has its own ESLint config and TypeScript project.
+From the `/playwright` directory run:
+
+```sh
+yarn lint         # Lint
+yarn lint:fix     # Auto-fix lint errors
+yarn typecheck    # Typecheck
+yarn validate     # Lint + typecheck together
+```
+
+Or via the Lando extra (if enabled):
+
+```sh
+lando playwright-lint
+lando playwright-typecheck
+lando playwright-validate
 ```
 
 #### Eslint in VSCode

@@ -28,6 +28,14 @@ During normal development, the schema file is updated automatically by the dev s
 
 When running in development mode, Lighthouse provides a GraphQL playground at <https://pilcrow.lndo.site/graphiql> for testing queries and mutations interactively.
 
+## Database Access in Resolvers
+
+Use Eloquent or the query builder in resolvers, builders and policies, and avoid
+raw SQL that names a table. The end-to-end tests give each parallel worker its
+own copy of the tables by switching the connection's table prefix, and
+hand-written table names do not follow it. See
+[Test isolation](./testing.md#test-isolation) for the details.
+
 ## Further Reading
 
 - [Lighthouse documentation](https://lighthouse-php.com/master/getting-started/installation.html)
